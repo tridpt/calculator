@@ -1,0 +1,49 @@
+name: Build & Release
+
+# Tự build Calculator.exe và tạo GitHub Release khi push tag dạng v*
+# Ví dụ:  git tag v1.0.0  &&  git push origin v1.0.0
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:        # cho phép bấm chạy tay từ tab Actions
+
+permissions:
+  contents: write           # để tạo release + upload file
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pillow pytest
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Build exe
+        run: pyinstaller --onefile --windowed --icon icon.ico --add-data "icon.ico;." --name Calculator main.py --noconfirm
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Calculator-windows
+          path: dist/Calculator.exe
+
+      - name: Create / update Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Calculator.exe
+          generate_release_notes: true
