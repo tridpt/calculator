@@ -34,6 +34,17 @@ PREMIUM_PLANS = [
     ("Gói Doanh Nghiệp", "Liên hệ để biết giá",     "Có thể đắt hơn cả cái máy tính Casio thật."),
 ]
 
+# Mỗi gói chỉ "mở khoá" một số phép tính nhất định -> mô tả gói có tác dụng thật.
+# allowed: tập các toán tử được phép. blocked sẽ bị chặn và đòi nâng cấp.
+PLAN_PERMISSIONS = {
+    "Gói Cơ Bản":       {"allowed": set(),                "next": "Gói Tiêu Chuẩn"},
+    "Gói Tiêu Chuẩn":   {"allowed": {"+"},                "next": "Gói Nâng Cao"},
+    "Gói Nâng Cao":     {"allowed": {"+", "-", "*", "/"}, "next": "Gói Doanh Nghiệp"},
+    "Gói Doanh Nghiệp": {"allowed": {"+", "-", "*", "/"}, "next": None},
+}
+
+OP_NAMES = {"+": "phép cộng", "-": "phép trừ", "*": "phép nhân", "/": "phép chia"}
+
 AD_LINES = [
     "🎉 Chúc mừng! Bạn là người dùng thứ 1.000.000 của ứng dụng.",
     "💸 Vay tiền online lãi suất 0% (chỉ trong 3 giây đầu).",
@@ -408,6 +419,11 @@ class Calculator(tk.Tk):
 
         self._step_random_ads()
         self._step_fake_loading()
+
+        # Gói vừa mua chỉ mở khoá một số phép tính -> kiểm tra quyền
+        if not self._step_check_plan_permission(plan):
+            return
+
         self._deliver_result()
         self._schedule_session_expiry()
 
@@ -827,6 +843,76 @@ class Calculator(tk.Tk):
 
         win.after(50, schedule)
         self.wait_window(win)
+
+    # ---- Bước 7.5: kiểm tra quyền của gói đã mua ---- #
+    def _operators_used(self):
+        """Trả về tập toán tử + - * / xuất hiện trong biểu thức.
+        Bỏ qua dấu '-' đứng đầu hoặc ngay sau '(' (số âm, không tính là phép trừ).
+        """
+        ops = set()
+        expr = self.expression
+        for i, ch in enumerate(expr):
+            if ch in "+*/":
+                ops.add(ch)
+            elif ch == "-":
+                prev = ""
+                j = i - 1
+                while j >= 0 and expr[j] == " ":
+                    j -= 1
+                if j >= 0:
+                    prev = expr[j]
+                # '-' là phép trừ nếu trước nó là số hoặc ')'
+                if prev.isdigit() or prev == ")" or prev == ".":
+                    ops.add("-")
+        return ops
+
+    def _step_check_plan_permission(self, plan):
+        """Mô tả gói có tác dụng thật: gói chỉ mở khoá một số phép tính.
+        Nếu biểu thức dùng phép ngoài quyền -> chặn và đòi nâng cấp.
+        Trả về True nếu được phép tính tiếp.
+        """
+        perm = PLAN_PERMISSIONS.get(plan)
+        if perm is None:
+            return True
+
+        # Gói Doanh Nghiệp: "liên hệ bộ phận kinh doanh" -> không bao giờ tính được
+        if plan == "Gói Doanh Nghiệp":
+            beep("warning")
+            messagebox.showinfo(
+                "Calculator",
+                "Cảm ơn bạn đã quan tâm Gói Doanh Nghiệp.\n"
+                "Bộ phận kinh doanh sẽ liên hệ trong vòng 3-5 ngày làm việc "
+                "để kích hoạt tính năng tính toán cho bạn.\n\n"
+                "Trong thời gian chờ, vui lòng tính tay."
+            )
+            return False
+
+        allowed = perm["allowed"]
+        used = self._operators_used()
+        forbidden = used - allowed
+
+        if not forbidden:
+            return True
+
+        # Có phép ngoài gói -> chặn, gợi ý nâng cấp lên gói cao hơn
+        op = sorted(forbidden)[0]
+        op_name = OP_NAMES.get(op, f"phép '{op}'")
+        nxt = perm["next"]
+        upgrade = f"\n\nVui lòng nâng cấp lên {nxt} để mở khoá {op_name}." if nxt else ""
+        beep("error")
+
+        if not allowed:
+            unlocked = "Gói này không bao gồm bất kỳ phép tính nào."
+        else:
+            names = ", ".join(OP_NAMES[o] for o in sorted(allowed))
+            unlocked = f"Gói của bạn chỉ mở khoá: {names}."
+
+        messagebox.showwarning(
+            "Calculator",
+            f"Biểu thức của bạn có sử dụng {op_name}.\n"
+            f"{unlocked}{upgrade}"
+        )
+        return False
 
     # ---- Bước 8: trả kết quả sai có chủ đích ---- #
     def _deliver_result(self):
