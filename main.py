@@ -109,6 +109,54 @@ SURVEY_QUESTIONS = [
      ["Quá rẻ", "Rẻ như cho", "Tôi muốn trả thêm"]),
 ]
 
+# Điều khoản dịch vụ vô lý - phải cuộn hết mới cho đồng ý
+EULA_TEXT = """ĐIỀU KHOẢN SỬ DỤNG DỊCH VỤ MÁY TÍNH
+
+Vui lòng đọc kỹ toàn bộ điều khoản trước khi tiếp tục.
+Bạn phải cuộn xuống tận cuối để có thể đồng ý.
+
+Điều 1. Bằng việc sử dụng dấu "=", bạn đồng ý trả phí cho mỗi
+kết quả, kể cả kết quả sai.
+
+Điều 2. Mọi kết quả do ứng dụng cung cấp chỉ mang tính tham khảo
+và có thể đúng một cách tình cờ.
+
+Điều 3. Bạn không được phép so sánh ứng dụng này với máy tính
+Casio, máy tính Windows, hay bất kỳ thiết bị nào tính đúng.
+
+Điều 4. Bạn đồng ý rằng số 7 là một con số nhạy cảm và có thể
+bị từ chối mà không cần lý do.
+
+Điều 5. Trong trường hợp kết quả đúng, đó là lỗi của hệ thống
+và sẽ được khắc phục trong bản cập nhật tiếp theo.
+
+Điều 6. Bạn đồng ý nhận quảng cáo vào bất kỳ thời điểm nào,
+kể cả lúc 3 giờ sáng.
+
+Điều 7. Ứng dụng có quyền hết hạn giấy phép bất cứ lúc nào nó
+thấy buồn.
+
+Điều 8. Bạn xác nhận đã đọc hết các điều khoản này, điều mà
+chúng tôi biết chắc là không ai làm.
+
+Điều 9. Nếu bạn đọc tới đây, xin chúc mừng, bạn vẫn chưa được
+tính toán gì cả.
+
+Điều 10. Mọi tranh chấp sẽ được giải quyết bằng oẳn tù tì.
+
+--- HẾT ĐIỀU KHOẢN ---
+Cảm ơn bạn đã giả vờ đọc."""
+
+# Các lỗi vô lý khi "kiểm tra" số thẻ
+CARD_REJECTIONS = [
+    "Số thẻ không được chứa chữ số 7.",
+    "Tổng các chữ số phải chia hết cho 13.",
+    "Số thẻ trông giống số thật quá, nghi ngờ gian lận.",
+    "Số thẻ phải có đúng 19 chữ số (ô chỉ cho nhập 16).",
+    "Chữ số đầu tiên không được là số nguyên tố.",
+    "Hệ thống không thích con số này lắm.",
+]
+
 
 # --------------------------------- App ----------------------------------- #
 
@@ -411,6 +459,11 @@ class Calculator(tk.Tk):
             self._register_give_up()
             return
 
+        # Điều khoản dịch vụ dài lê thê
+        if not self._step_eula():
+            self._register_give_up()
+            return
+
         if not self._step_payment_form():
             self._register_give_up()
             return
@@ -619,9 +672,55 @@ class Calculator(tk.Tk):
         self.wait_window(win)
         return choice["plan"]
 
+    # ---- Bước 2.5: điều khoản dịch vụ (phải cuộn hết mới đồng ý) ---- #
+    def _step_eula(self):
+        win = self._toplevel("Điều khoản dịch vụ", "460x420")
+
+        tk.Label(win, text="Vui lòng đọc và đồng ý điều khoản",
+                 bg="#1e1e2e", fg="#cdd6f4",
+                 font=("Segoe UI", 12, "bold")).pack(pady=(10, 6))
+
+        text_frame = tk.Frame(win, bg="#1e1e2e")
+        text_frame.pack(fill="both", expand=True, padx=12)
+
+        scrollbar = tk.Scrollbar(text_frame)
+        scrollbar.pack(side="right", fill="y")
+
+        text = tk.Text(text_frame, bg="#11111b", fg="#cdd6f4",
+                       font=("Segoe UI", 9), relief="flat", wrap="word",
+                       yscrollcommand=scrollbar.set, padx=10, pady=8)
+        text.pack(side="left", fill="both", expand=True)
+        text.insert("1.0", EULA_TEXT)
+        text.config(state="disabled")
+        scrollbar.config(command=text.yview)
+
+        result = {"ok": False}
+
+        agree_btn = tk.Button(
+            win, text="Tôi đồng ý (hãy cuộn xuống cuối)",
+            bg="#45475a", fg="#6c7086", relief="flat", state="disabled",
+            command=lambda: (result.update(ok=True), win.destroy()),
+        )
+        agree_btn.pack(pady=10, ipadx=10)
+
+        def check_scrolled(_e=None):
+            # yview() trả về (top, bottom) theo tỉ lệ 0..1
+            if text.yview()[1] >= 0.99:
+                agree_btn.config(state="normal", bg="#a6e3a1", fg="#1e1e2e",
+                                 text="Tôi đã đọc và đồng ý")
+
+        text.bind("<MouseWheel>", lambda e: win.after(10, check_scrolled))
+        scrollbar.bind("<B1-Motion>", lambda e: win.after(10, check_scrolled))
+        scrollbar.bind("<ButtonRelease-1>", lambda e: win.after(10, check_scrolled))
+        # Trường hợp text ngắn hiện hết sẵn -> cho enable luôn
+        win.after(200, check_scrolled)
+
+        self.wait_window(win)
+        return result["ok"]
+
     # ---- Bước 3: form thẻ + mã giảm giá ---- #
     def _step_payment_form(self):
-        win = self._toplevel("Thanh toán", "400x420")
+        win = self._toplevel("Thanh toán", "400x480")
 
         tk.Label(win, text="Nhập thông tin thẻ", bg="#1e1e2e",
                  fg="#cdd6f4", font=("Segoe UI", 12, "bold")).pack(pady=10)
@@ -637,6 +736,24 @@ class Calculator(tk.Tk):
                              relief="flat", insertbackground="#cdd6f4")
             entry.pack(fill="x", padx=20, pady=2, ipady=4)
             fields[placeholder] = entry
+
+        # Nút "kiểm tra" số thẻ - mỗi lần lại chê một kiểu vô lý
+        card_check = {"i": 0}
+
+        def verify_card():
+            num = fields["Số thẻ"].get().strip()
+            if not num:
+                messagebox.showinfo("Calculator", "Vui lòng nhập số thẻ.", parent=win)
+                return
+            # Xoay vòng qua các lý do từ chối vô lý
+            reason = CARD_REJECTIONS[card_check["i"] % len(CARD_REJECTIONS)]
+            card_check["i"] += 1
+            beep("error")
+            messagebox.showwarning("Calculator",
+                                   f"Số thẻ chưa hợp lệ:\n{reason}", parent=win)
+
+        tk.Button(win, text="Kiểm tra số thẻ", bg="#45475a", fg="#cdd6f4",
+                  relief="flat", command=verify_card).pack(padx=20, pady=(4, 0), anchor="e")
 
         # Mã giảm giá
         tk.Label(win, text="Mã giảm giá (tuỳ chọn)", bg="#1e1e2e",
