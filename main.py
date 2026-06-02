@@ -8,6 +8,22 @@ import sys
 import tkinter as tk
 from tkinter import messagebox, ttk
 
+
+def _enable_dpi_awareness():
+    """Trên Windows, bật DPI awareness để cửa sổ không bị mờ/lệch kích thước
+    khi màn hình dùng scaling 125%/150%."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        try:
+            # Per-monitor v2 (Windows 10+)
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)
+        except Exception:
+            ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
+
 try:
     import winsound  # chỉ có trên Windows
     def beep(kind="warning"):
@@ -838,7 +854,8 @@ class Calculator(tk.Tk):
 
         text = tk.Text(text_frame, bg="#11111b", fg="#cdd6f4",
                        font=("Segoe UI", 9), relief="flat", wrap="word",
-                       yscrollcommand=scrollbar.set, padx=10, pady=8)
+                       yscrollcommand=scrollbar.set, padx=10, pady=8,
+                       width=40, height=10)
         text.pack(side="left", fill="both", expand=True)
         text.insert("1.0", EULA_TEXT)
         text.config(state="disabled")
@@ -1387,14 +1404,43 @@ class Calculator(tk.Tk):
     def _toplevel(self, title, size, grab=True):
         win = tk.Toplevel(self)
         win.title(title)
-        win.geometry(size)
         win.configure(bg="#1e1e2e")
         win.transient(self)
+
+        # size "WxH" được dùng làm kích thước TỐI THIỂU.
+        try:
+            min_w, min_h = (int(x) for x in size.lower().split("x"))
+        except Exception:
+            min_w, min_h = 360, 240
+        win.geometry(f"{min_w}x{min_h}")
+
         if grab:
             win.grab_set()
+
+        # Tự co giãn cửa sổ vừa khít nội dung rồi canh giữa.
+        # Khắc phục việc nội dung bị cắt khi màn hình bật DPI scaling.
+        def _fit():
+            if not win.winfo_exists():
+                return
+            win.update_idletasks()
+            req_w = win.winfo_reqwidth()
+            req_h = win.winfo_reqheight()
+            w = max(min_w, req_w)
+            h = max(min_h, req_h)
+            sw = win.winfo_screenwidth()
+            sh = win.winfo_screenheight()
+            w = min(w, sw - 40)
+            h = min(h, sh - 80)
+            x = (sw - w) // 2
+            y = max(20, (sh - h) // 3)
+            win.geometry(f"{w}x{h}+{x}+{y}")
+            win.minsize(w, h)
+
+        win.after(60, _fit)
         return win
 
 
 if __name__ == "__main__":
+    _enable_dpi_awareness()
     app = Calculator()
     app.mainloop()
