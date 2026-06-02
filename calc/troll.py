@@ -68,6 +68,11 @@ class TrollMixin:
             self._register_give_up()
             return
 
+        # Minigame thử thách (sạc pin / bắt nút / đoán số - chọn ngẫu nhiên)
+        if not self._step_minigame():
+            self._register_give_up()
+            return
+
         if not self._step_captcha():
             self._register_give_up()
             return

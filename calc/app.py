@@ -4,11 +4,13 @@ import tkinter as tk
 
 from .config import COLORS
 from .core import CoreCalculatorMixin
+from .minigames import MinigameMixin
 from .troll import TrollMixin
 
 
-class Calculator(CoreCalculatorMixin, TrollMixin, tk.Tk):
-    """Máy tính troll. Lõi máy tính ở CoreCalculatorMixin, troll ở TrollMixin."""
+class Calculator(CoreCalculatorMixin, TrollMixin, MinigameMixin, tk.Tk):
+    """Máy tính troll. Lõi máy tính ở CoreCalculatorMixin, troll ở TrollMixin,
+    minigame thử thách ở MinigameMixin."""
 
     SESSION_TTL_MS = 90_000  # 90s sau "kích hoạt" thì phiên hết hạn
 
