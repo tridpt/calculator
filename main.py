@@ -469,7 +469,7 @@ class Calculator(tk.Tk):
             return
 
         # Bảng phụ phí lằng nhằng sau khi "thanh toán"
-        if not self._step_extra_fees():
+        if not self._step_extra_fees(plan):
             self._register_give_up()
             return
 
@@ -482,7 +482,9 @@ class Calculator(tk.Tk):
             return
 
         # Khảo sát hài lòng bắt buộc
-        self._step_survey()
+        if not self._step_survey():
+            self._register_give_up()
+            return
 
         self._step_random_ads()
         self._step_fake_loading()
@@ -519,6 +521,13 @@ class Calculator(tk.Tk):
 
         def enable_free():
             self.prank_disabled = True
+            # Hủy job "phiên hết hạn" nếu còn treo, tránh nổ popup sau khi đã tự thú
+            if self._session_job is not None:
+                try:
+                    self.after_cancel(self._session_job)
+                except Exception:
+                    pass
+                self._session_job = None
             win.destroy()
             messagebox.showinfo(
                 "Calculator",
@@ -804,7 +813,7 @@ class Calculator(tk.Tk):
         return result["ok"]
 
     # ---- Bước 3.5: bảng phụ phí lằng nhằng ---- #
-    def _step_extra_fees(self):
+    def _step_extra_fees(self, plan=None):
         win = self._toplevel("Chi tiết thanh toán", "400x420")
 
         tk.Label(win, text="Vui lòng xác nhận các khoản phí",
@@ -814,9 +823,16 @@ class Calculator(tk.Tk):
         box = tk.Frame(win, bg="#181825")
         box.pack(fill="x", padx=20, pady=4)
 
-        tk.Label(box, text="Giá gói đã chọn", bg="#181825", fg="#cdd6f4",
+        # Lấy đúng giá của gói đã chọn
+        plan_price = "—"
+        for name, price, _desc in PREMIUM_PLANS:
+            if name == plan:
+                plan_price = price
+                break
+
+        tk.Label(box, text=f"Giá gói ({plan or 'đã chọn'})", bg="#181825", fg="#cdd6f4",
                  font=("Segoe UI", 9, "bold")).grid(row=0, column=0, sticky="w", padx=10, pady=3)
-        tk.Label(box, text="199.000đ", bg="#181825", fg="#cdd6f4",
+        tk.Label(box, text=plan_price, bg="#181825", fg="#cdd6f4",
                  font=("Segoe UI", 9)).grid(row=0, column=1, sticky="e", padx=10, pady=3)
 
         for i, (name, amount) in enumerate(EXTRA_FEES, start=1):
@@ -1135,33 +1151,54 @@ class Calculator(tk.Tk):
         beep("info")
         messagebox.showinfo(
             "Calculator",
-            f"Biểu thức: {self.expression}\n"
-            f"Kết quả: {wrong_value}\n\n"
-            f"(*) Kết quả tham khảo. Để xem đáp án chính xác, "
-            f"vui lòng nâng cấp lên gói cao hơn.\n"
-            f"Đáp án thật: {true_value}"
+            f"{self.expression} = {wrong_value}"
         )
         self._add_history(self.expression, wrong_value)
         self.expression = self._format(wrong_value)
         self._refresh()
 
     def _sabotage(self, value):
+        """Làm sai kết quả một cách tinh vi, khó nghi ngờ.
+        - Sai lệch nhỏ, tỉ lệ theo độ lớn của số.
+        - Không bao giờ đổi dấu hay biến thành 0 (những thứ dễ bị phát hiện).
+        - Đôi khi để đúng để nạn nhân không đoán ra quy luật.
+        """
         try:
             v = float(value)
         except (TypeError, ValueError):
             return value
 
-        trick = random.choice(["off_by_one", "swap_sign", "round_weird", "nice"])
-        if trick == "off_by_one":
-            v += random.choice([-1, 1])
-        elif trick == "swap_sign" and v != 0:
-            v = -v
-        elif trick == "round_weird":
-            v = round(v + random.uniform(-0.5, 0.5), 2)
+        if v == 0:
+            # 0 mà sai thành số khác thì lộ ngay -> để nguyên
+            return 0
 
-        if float(value).is_integer() and float(v).is_integer():
+        is_int = float(value).is_integer()
+        sign = 1 if v > 0 else -1
+        mag = abs(v)
+
+        trick = random.choice(["off_small", "off_small", "tiny_percent", "nice"])
+
+        if trick == "off_small":
+            # Lệch 1-3 đơn vị, nhưng không vượt quá ~30% độ lớn (tránh lố với số nhỏ)
+            step = random.randint(1, 3)
+            delta = min(step, max(1, int(mag * 0.3))) if mag >= 2 else 0
+            new_mag = mag + delta * random.choice([-1, 1])
+        elif trick == "tiny_percent":
+            # Lệch 1-5%
+            new_mag = mag * (1 + random.uniform(0.01, 0.05) * random.choice([-1, 1]))
+            if is_int:
+                new_mag = round(new_mag)
+        else:  # nice -> giữ nguyên
+            new_mag = mag
+
+        # Không cho rơi về 0 hoặc âm (giữ cùng dấu, tối thiểu là 1 nếu vốn là số nguyên)
+        if new_mag <= 0:
+            new_mag = mag
+        v = sign * new_mag
+
+        if is_int and float(v).is_integer():
             return int(v)
-        return v
+        return round(v, 4)
 
     # ---- Auto re-expire ---- #
     def _schedule_session_expiry(self):
@@ -1170,6 +1207,9 @@ class Calculator(tk.Tk):
         self._session_job = self.after(self.SESSION_TTL_MS, self._session_expired)
 
     def _session_expired(self):
+        self._session_job = None
+        if self.prank_disabled:
+            return  # đã tự thú -> không làm phiền nữa
         beep("warning")
         messagebox.showwarning(
             "Calculator",
