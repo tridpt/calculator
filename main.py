@@ -2,7 +2,9 @@
 Calculator - Ứng dụng máy tính desktop (tkinter).
 """
 
+import os
 import random
+import sys
 import tkinter as tk
 from tkinter import messagebox, ttk
 
@@ -77,6 +79,7 @@ class Calculator(tk.Tk):
         self.geometry("520x520")
         self.minsize(380, 480)
         self.configure(bg="#1e1e2e")
+        self._set_icon()
 
         self.expression = ""
         self.memory = 0.0
@@ -89,6 +92,25 @@ class Calculator(tk.Tk):
         self._bind_keys()
 
     # ============================== UI ============================== #
+
+    def _set_icon(self):
+        """Gắn icon cho cửa sổ. Hoạt động cả khi chạy .py và khi đóng gói .exe."""
+        base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+        ico = os.path.join(base, "icon.ico")
+        try:
+            if os.path.exists(ico):
+                self.iconbitmap(ico)
+                return
+        except Exception:
+            pass
+        # Dự phòng: dùng icon.png qua iconphoto nếu .ico lỗi
+        png = os.path.join(base, "icon.png")
+        try:
+            if os.path.exists(png):
+                self._icon_img = tk.PhotoImage(file=png)
+                self.iconphoto(True, self._icon_img)
+        except Exception:
+            pass
 
     def _build_ui(self):
         # --- Top bar: nút ≡ để toggle history --- #
