@@ -160,6 +160,23 @@ UPDATE_STEPS = [
     "Đang cài đặt (99%)...",
 ]
 
+# "Nội dung" quảng cáo video bắt xem hết mới được tính
+VIDEO_AD_TITLES = [
+    "Quảng cáo: Nước tăng lực Bò Mộng 🐂",
+    "Quảng cáo: Khoá học làm giàu sau 1 đêm 💰",
+    "Quảng cáo: App giao đồ ăn nhanh hơn ánh sáng 🛵",
+    "Quảng cáo: Bột giặt trắng hơn cả sự thật 🧺",
+    "Quảng cáo: Game mới - nạp là mạnh 🎮",
+]
+
+# Các nền tảng "phải chia sẻ" để mở khoá (bấm cái nào cũng không thật sự chia sẻ)
+SHARE_PLATFORMS = [
+    ("📘 Facebook",  "Đang mở Facebook... à mà thôi, chưa tích hợp."),
+    ("📷 Instagram", "Story của bạn đẹp lắm, tiếc là chưa đăng được."),
+    ("🎵 TikTok",    "Bạn chưa đủ nổi để chia sẻ lên TikTok."),
+    ("🐦 X (Twitter)", "Đã hết lượt tweet miễn phí hôm nay."),
+]
+
 # Bảng màu dùng chung
 COLORS = {
     "bg":        "#1e1e2e",

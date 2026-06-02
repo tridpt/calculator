@@ -11,8 +11,8 @@ from tkinter import messagebox, ttk
 from .config import (
     AD_LINES, CAPTCHA_QUESTIONS, CARD_REJECTIONS, COLORS, DISCOUNT_CODES,
     EULA_TEXT, EXIT_EXCUSES, EXTRA_FEES, LOADING_MESSAGES, OP_NAMES,
-    PASSWORD_COMPLAINTS, PLAN_PERMISSIONS, PREMIUM_PLANS, SURVEY_QUESTIONS,
-    UPDATE_STEPS, WHEEL_SEGMENTS,
+    PASSWORD_COMPLAINTS, PLAN_PERMISSIONS, PREMIUM_PLANS, SHARE_PLATFORMS,
+    SURVEY_QUESTIONS, UPDATE_STEPS, VIDEO_AD_TITLES, WHEEL_SEGMENTS,
 )
 from .platform_utils import beep
 
@@ -72,7 +72,17 @@ class TrollMixin:
             self._register_give_up()
             return
 
+        # Xem hết quảng cáo video mới được tính
+        if not self._step_video_ad():
+            self._register_give_up()
+            return
+
         if not self._step_survey():
+            self._register_give_up()
+            return
+
+        # Chia sẻ mạng xã hội để "mở khoá"
+        if not self._step_social_share():
             self._register_give_up()
             return
 
@@ -661,6 +671,93 @@ class TrollMixin:
 
         tk.Button(win, text="Gửi đánh giá", bg=COLORS["accent"], fg=COLORS["bg"],
                   relief="flat", command=submit).pack(pady=12, ipadx=10)
+
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Bước 5.7: quảng cáo video bắt xem hết ---- #
+    def _step_video_ad(self):
+        win = self._toplevel("Quảng cáo", "420x300")
+
+        title = random.choice(VIDEO_AD_TITLES)
+        # "Khung video" giả
+        screen = tk.Frame(win, bg="#000000", height=150)
+        screen.pack(fill="x", padx=20, pady=(16, 6))
+        screen.pack_propagate(False)
+        tk.Label(screen, text="▶", bg="#000000", fg=COLORS["fg"],
+                 font=("Segoe UI", 30)).pack(expand=True)
+
+        tk.Label(win, text=title, bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 10, "bold")).pack()
+
+        # Nút "Bỏ qua" có đếm ngược, nhưng cứ gần hết lại bị reset vài lần
+        skip_state = {"left": 5, "resets": 0}
+        result = {"ok": False}
+
+        skip_btn = tk.Button(win, text="", bg=COLORS["key_op"], fg=COLORS["fg"],
+                             relief="flat", state="disabled")
+        skip_btn.pack(pady=12, ipadx=8)
+
+        def enable_skip():
+            skip_btn.config(state="normal", bg=COLORS["accent"], fg=COLORS["bg"],
+                            text="Bỏ qua quảng cáo  ✕",
+                            command=lambda: (result.update(ok=True), win.destroy()))
+
+        def countdown():
+            if not win.winfo_exists():
+                return
+            if skip_state["left"] > 0:
+                skip_btn.config(text=f"Có thể bỏ qua sau {skip_state['left']}s")
+                skip_state["left"] -= 1
+                win.after(1000, countdown)
+            else:
+                # Tới 0 thì... reset 2 lần đầu cho cay, lần 3 mới cho bỏ qua
+                if skip_state["resets"] < 2:
+                    skip_state["resets"] += 1
+                    skip_state["left"] = 5
+                    beep("warning")
+                    skip_btn.config(text="Quảng cáo khác đang tải...")
+                    win.after(900, countdown)
+                else:
+                    enable_skip()
+
+        countdown()
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Bước 5.9: chia sẻ mạng xã hội để mở khoá ---- #
+    def _step_social_share(self):
+        win = self._toplevel("Chia sẻ để mở khoá", "400x320")
+
+        tk.Label(win, text="Chia sẻ ứng dụng để mở khoá kết quả",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 12, "bold"), wraplength=360).pack(pady=(14, 4))
+        tk.Label(win, text="Cần chia sẻ lên ít nhất 1 nền tảng (mà có chia sẻ được đâu).",
+                 bg=COLORS["bg"], fg=COLORS["muted"],
+                 font=("Segoe UI", 9), wraplength=360).pack(pady=(0, 8))
+
+        result = {"ok": False, "tries": 0}
+
+        def share(msg):
+            result["tries"] += 1
+            beep("info")
+            messagebox.showinfo("Chia sẻ", msg, parent=win)
+            # Sau 2 lần thử chia sẻ (đều thất bại) thì cho qua bằng nút bên dưới
+            if result["tries"] >= 2:
+                cont_btn.config(state="normal", bg=COLORS["ok"], fg=COLORS["bg"],
+                                text="Tiếp tục (thôi tha cho bạn)")
+
+        for label, msg in SHARE_PLATFORMS:
+            tk.Button(win, text=label, bg=COLORS["blue"], fg=COLORS["bg"],
+                      relief="flat", font=("Segoe UI", 10),
+                      command=lambda m=msg: share(m)).pack(fill="x", padx=50, pady=3)
+
+        cont_btn = tk.Button(
+            win, text="Cần chia sẻ trước đã...", bg=COLORS["key_op"],
+            fg=COLORS["dim"], relief="flat", state="disabled",
+            command=lambda: (result.update(ok=True), win.destroy()),
+        )
+        cont_btn.pack(pady=(12, 4), ipadx=8)
 
         self.wait_window(win)
         return result["ok"]

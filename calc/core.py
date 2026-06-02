@@ -154,6 +154,17 @@ class CoreCalculatorMixin:
         self.bind("<BackSpace>", self._key_back)
         for ch in "0123456789+-*/().":
             self.bind(ch, lambda e, c=ch: self._key_char(c))
+        # Tổ hợp phím THOÁT ẨN (chỉ chủ máy biết): đóng app ngay, bỏ qua màn níu kéo.
+        self.bind_all("<Control-Shift-Q>", self._secret_quit)
+        self.bind_all("<Control-Shift-KeyPress-Q>", self._secret_quit)
+
+    def _secret_quit(self, _e=None):
+        """Lối thoát bí mật: thoát ngay lập tức, không troll."""
+        try:
+            self.destroy()
+        except Exception:
+            pass
+        return "break"
 
     def _focus_in_popup(self):
         """True nếu con trỏ đang ở Entry/Text của popup -> không can thiệp máy tính chính."""
