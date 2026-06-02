@@ -157,6 +157,24 @@ CARD_REJECTIONS = [
     "Hệ thống không thích con số này lắm.",
 ]
 
+# Lý do từ chối khi nạn nhân cố thoát app
+EXIT_EXCUSES = [
+    "Bạn có chắc muốn thoát? Ưu đãi sẽ không còn nữa đâu.",
+    "Khoan đã! Bạn vẫn chưa tính được phép nào mà.",
+    "Hệ thống đang lưu... thói quen rời bỏ của bạn.",
+    "Thật sự thoát? Cái máy tính sẽ buồn lắm đấy.",
+    "Vui lòng xác nhận lần cuối: bạn nỡ bỏ đi sao?",
+]
+
+# Mật khẩu nào cũng bị chê - đăng nhập bất khả thi
+PASSWORD_COMPLAINTS = [
+    "Mật khẩu phải chứa ít nhất 1 chữ Hán.",
+    "Mật khẩu không được giống 10.000 mật khẩu phổ biến (kể cả cái bạn vừa nghĩ).",
+    "Mật khẩu phải chứa cảm xúc tích cực.",
+    "Mật khẩu quá mạnh, làm máy chủ tự ti. Vui lòng yếu hơn.",
+    "Tài khoản này có thể tồn tại hoặc không. Vui lòng thử lại.",
+]
+
 
 # --------------------------------- App ----------------------------------- #
 
@@ -180,9 +198,11 @@ class Calculator(tk.Tk):
         self.revealed = False      # đã hiện màn "tự thú" chưa
         self.prank_disabled = False  # sau khi tự thú, cho phép tính thật
         self._session_job = None  # after() id để cancel khi cần
+        self._exit_attempts = 0   # số lần cố thoát app
 
         self._build_ui()
         self._bind_keys()
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
 
     # ============================== UI ============================== #
 
@@ -454,6 +474,11 @@ class Calculator(tk.Tk):
             self._register_give_up()
             return
 
+        # Đăng nhập tài khoản (mọi mật khẩu đều bị chê, có nút khách cho qua)
+        if not self._step_login():
+            self._register_give_up()
+            return
+
         plan = self._step_choose_plan()
         if plan is None:
             self._register_give_up()
@@ -602,6 +627,50 @@ class Calculator(tk.Tk):
             msg = ("Tính năng này yêu cầu giấy phép hợp lệ.\n"
                    "Bạn có muốn kích hoạt ngay bây giờ không?")
         return messagebox.askokcancel("Calculator", msg)
+
+    # ---- Bước 1.5: đăng nhập tài khoản (mọi mật khẩu đều bị chê) ---- #
+    def _step_login(self):
+        win = self._toplevel("Đăng nhập", "380x300")
+
+        tk.Label(win, text="Đăng nhập để tiếp tục", bg="#1e1e2e",
+                 fg="#cdd6f4", font=("Segoe UI", 12, "bold")).pack(pady=(14, 8))
+
+        tk.Label(win, text="Tên đăng nhập", bg="#1e1e2e", fg="#a6adc8",
+                 font=("Segoe UI", 9)).pack(anchor="w", padx=30)
+        user_entry = tk.Entry(win, bg="#11111b", fg="#cdd6f4",
+                              relief="flat", insertbackground="#cdd6f4")
+        user_entry.pack(fill="x", padx=30, pady=(2, 6), ipady=4)
+
+        tk.Label(win, text="Mật khẩu", bg="#1e1e2e", fg="#a6adc8",
+                 font=("Segoe UI", 9)).pack(anchor="w", padx=30)
+        pw_entry = tk.Entry(win, bg="#11111b", fg="#cdd6f4", show="•",
+                            relief="flat", insertbackground="#cdd6f4")
+        pw_entry.pack(fill="x", padx=30, pady=(2, 6), ipady=4)
+
+        complaint = {"i": 0}
+        result = {"ok": False}
+
+        def do_login():
+            if not pw_entry.get():
+                messagebox.showinfo("Đăng nhập", "Vui lòng nhập mật khẩu.", parent=win)
+                return
+            msg = PASSWORD_COMPLAINTS[complaint["i"] % len(PASSWORD_COMPLAINTS)]
+            complaint["i"] += 1
+            beep("error")
+            messagebox.showwarning("Đăng nhập", msg, parent=win)
+            pw_entry.delete(0, tk.END)
+
+        def as_guest():
+            result["ok"] = True
+            win.destroy()
+
+        tk.Button(win, text="Đăng nhập", bg="#74c7ec", fg="#1e1e2e",
+                  relief="flat", command=do_login).pack(pady=(8, 4), ipadx=10)
+        tk.Button(win, text="Tiếp tục với tư cách khách", bg="#45475a",
+                  fg="#cdd6f4", relief="flat", command=as_guest).pack()
+
+        self.wait_window(win)
+        return result["ok"]
 
     # ---- Bước 2: chọn gói + đếm ngược ---- #
     def _step_choose_plan(self):
@@ -1219,6 +1288,29 @@ class Calculator(tk.Tk):
         # Không reset attempts - lần bấm = sau lại phải qua hết quy trình.
 
     # ============================ Helpers =========================== #
+
+    def _on_close(self):
+        # Đã tự thú -> cho thoát ngay, không troll nữa
+        if self.prank_disabled:
+            self.destroy()
+            return
+
+        self._exit_attempts += 1
+        if self._exit_attempts <= len(EXIT_EXCUSES):
+            beep("warning")
+            excuse = EXIT_EXCUSES[self._exit_attempts - 1]
+            stay = messagebox.askretrycancel(
+                "Calculator",
+                f"{excuse}\n\n(Retry = ở lại, Cancel = vẫn thoát)"
+            )
+            # askretrycancel: Retry=True (ở lại), Cancel=False (thoát)
+            if stay:
+                return
+            # Nạn nhân chọn thoát: vẫn níu thêm cho tới khi hết câu
+            if self._exit_attempts < len(EXIT_EXCUSES):
+                return
+        # Hết câu níu kéo -> đành cho thoát
+        self.destroy()
 
     def _toplevel(self, title, size, grab=True):
         win = tk.Toplevel(self)
