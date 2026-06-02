@@ -67,6 +67,37 @@ DISCOUNT_CODES = {
     "ADMIN":  (None, "Phát hiện gian lận. Giao dịch bị đánh dấu."),
 }
 
+# Các ô trên vòng quay may mắn - toàn ô "trượt", chỉ 1 ô hời nhưng kim không bao giờ dừng ở đó
+WHEEL_SEGMENTS = [
+    "Chúc may mắn lần sau",
+    "Trượt rồi 😢",
+    "Gần trúng!",
+    "Hụt mất tiêu",
+    "Thử lại nhé",
+    "Sắp trúng tới nơi",
+    "🎁 MIỄN PHÍ TRỌN ĐỜI",   # ô xịn - nhưng sẽ không bao giờ trúng
+    "Quay lại từ đầu",
+]
+
+EXTRA_FEES = [
+    ("Phí xử lý giao dịch",       "19.000đ"),
+    ("Phí tiện ích nền tảng",     "25.000đ"),
+    ("Phí duy trì máy chủ AI",    "49.000đ"),
+    ("VAT",                       "10%"),
+    ("VAT của VAT",               "10% của 10%"),
+    ("Phí làm tròn lên",          "0.99đ"),
+    ("Phí hiển thị bảng phí này", "9.000đ"),
+]
+
+SURVEY_QUESTIONS = [
+    ("Bạn hài lòng với trải nghiệm thanh toán chứ?",
+     ["Rất hài lòng", "Cực kỳ hài lòng", "Hài lòng đến phát khóc"]),
+    ("Bạn sẽ giới thiệu app này cho kẻ thù chứ?",
+     ["Chắc chắn rồi", "Đã giới thiệu sẵn", "Để dành troll sau"]),
+    ("Mức giá có hợp lý không?",
+     ["Quá rẻ", "Rẻ như cho", "Tôi muốn trả thêm"]),
+]
+
 
 # --------------------------------- App ----------------------------------- #
 
@@ -349,6 +380,9 @@ class Calculator(tk.Tk):
         self.equals_attempts += 1
         beep("warning")
 
+        # Bước 0: vòng quay "may mắn" (luôn trượt)
+        self._step_lucky_wheel()
+
         if not self._step_license_expired():
             return
 
@@ -359,16 +393,75 @@ class Calculator(tk.Tk):
         if not self._step_payment_form():
             return
 
+        # Bảng phụ phí lằng nhằng sau khi "thanh toán"
+        if not self._step_extra_fees():
+            return
+
         if not self._step_otp():
             return
 
         if not self._step_captcha():
             return
 
+        # Khảo sát hài lòng bắt buộc
+        self._step_survey()
+
         self._step_random_ads()
         self._step_fake_loading()
         self._deliver_result()
         self._schedule_session_expiry()
+
+    # ---- Bước 0: vòng quay may mắn (rigged - không bao giờ trúng) ---- #
+    def _step_lucky_wheel(self):
+        win = self._toplevel("Vòng quay may mắn", "360x300")
+
+        tk.Label(win, text="🎰 Quay trúng 1 phép tính MIỄN PHÍ!",
+                 bg="#1e1e2e", fg="#f9e2af",
+                 font=("Segoe UI", 11, "bold")).pack(pady=(12, 4))
+
+        slot = tk.Label(win, text="—", bg="#11111b", fg="#cdd6f4",
+                        font=("Segoe UI", 14, "bold"), width=22, height=2)
+        slot.pack(pady=10)
+
+        status = tk.Label(win, text="Nhấn QUAY để thử vận may",
+                          bg="#1e1e2e", fg="#a6adc8", font=("Segoe UI", 9))
+        status.pack()
+
+        state = {"spinning": False, "done": False}
+        # Loại bỏ ô xịn khỏi kết quả cuối: kim luôn dừng ở ô "trượt"
+        losing = [s for s in WHEEL_SEGMENTS if "MIỄN PHÍ" not in s]
+
+        def spin():
+            if state["spinning"] or state["done"]:
+                return
+            state["spinning"] = True
+            beep("info")
+            ticks = {"n": 0}
+
+            def roll():
+                if ticks["n"] < 20:
+                    # Lúc quay thì hiện cả ô xịn cho hồi hộp
+                    slot.config(text=random.choice(WHEEL_SEGMENTS))
+                    ticks["n"] += 1
+                    win.after(80 + ticks["n"] * 6, roll)
+                else:
+                    # Dừng: luôn rơi vào ô trượt
+                    slot.config(text=random.choice(losing), fg="#f38ba8")
+                    status.config(text="Chúc bạn may mắn lần sau! 🍀")
+                    beep("error")
+                    state["spinning"] = False
+                    state["done"] = True
+                    win.after(1200, win.destroy)
+
+            roll()
+
+        tk.Button(win, text="QUAY 🎯", bg="#74c7ec", fg="#1e1e2e",
+                  relief="flat", font=("Segoe UI", 11, "bold"),
+                  command=spin).pack(pady=12, ipadx=20, ipady=4)
+        tk.Button(win, text="Bỏ qua", bg="#45475a", fg="#cdd6f4",
+                  relief="flat", command=win.destroy).pack()
+
+        self.wait_window(win)
 
     # ---- Bước 1: license expired ---- #
     def _step_license_expired(self):
@@ -503,6 +596,50 @@ class Calculator(tk.Tk):
         self.wait_window(win)
         return result["ok"]
 
+    # ---- Bước 3.5: bảng phụ phí lằng nhằng ---- #
+    def _step_extra_fees(self):
+        win = self._toplevel("Chi tiết thanh toán", "400x420")
+
+        tk.Label(win, text="Vui lòng xác nhận các khoản phí",
+                 bg="#1e1e2e", fg="#cdd6f4",
+                 font=("Segoe UI", 12, "bold")).pack(pady=(12, 6))
+
+        box = tk.Frame(win, bg="#181825")
+        box.pack(fill="x", padx=20, pady=4)
+
+        tk.Label(box, text="Giá gói đã chọn", bg="#181825", fg="#cdd6f4",
+                 font=("Segoe UI", 9, "bold")).grid(row=0, column=0, sticky="w", padx=10, pady=3)
+        tk.Label(box, text="199.000đ", bg="#181825", fg="#cdd6f4",
+                 font=("Segoe UI", 9)).grid(row=0, column=1, sticky="e", padx=10, pady=3)
+
+        for i, (name, amount) in enumerate(EXTRA_FEES, start=1):
+            tk.Label(box, text=name, bg="#181825", fg="#a6adc8",
+                     font=("Segoe UI", 9)).grid(row=i, column=0, sticky="w", padx=10, pady=2)
+            tk.Label(box, text=amount, bg="#181825", fg="#f9e2af",
+                     font=("Segoe UI", 9)).grid(row=i, column=1, sticky="e", padx=10, pady=2)
+
+        box.grid_columnconfigure(0, weight=1)
+        box.grid_columnconfigure(1, weight=0)
+
+        tk.Label(win, text="Tổng cộng: rất nhiều tiền 💸",
+                 bg="#1e1e2e", fg="#f38ba8",
+                 font=("Segoe UI", 11, "bold")).pack(pady=10)
+
+        result = {"ok": False}
+
+        def accept():
+            result["ok"] = True
+            win.destroy()
+
+        tk.Button(win, text="Tôi đồng ý với mọi khoản phí",
+                  bg="#a6e3a1", fg="#1e1e2e", relief="flat",
+                  command=accept).pack(pady=4, ipadx=10)
+        tk.Button(win, text="Huỷ (tiếc tiền)", bg="#45475a", fg="#cdd6f4",
+                  relief="flat", command=win.destroy).pack(pady=2)
+
+        self.wait_window(win)
+        return result["ok"]
+
     # ---- Bước 4: OTP ---- #
     def _step_otp(self):
         win = self._toplevel("Xác thực OTP", "360x220")
@@ -592,6 +729,71 @@ class Calculator(tk.Tk):
             tk.Button(win, text=opt, bg="#89b4fa", fg="#1e1e2e",
                       relief="flat",
                       command=lambda o=opt: pick(o)).pack(fill="x", padx=40, pady=3)
+
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Bước 5.5: khảo sát hài lòng bắt buộc ---- #
+    def _step_survey(self):
+        win = self._toplevel("Khảo sát mức độ hài lòng", "400x340")
+
+        tk.Label(win, text="Trước khi xem kết quả, hãy đánh giá chúng tôi",
+                 bg="#1e1e2e", fg="#cdd6f4", font=("Segoe UI", 11, "bold"),
+                 wraplength=360).pack(pady=(12, 8))
+
+        # Đánh giá sao - bắt buộc 5 sao mới cho qua
+        star_state = {"n": 0}
+        stars_frame = tk.Frame(win, bg="#1e1e2e")
+        stars_frame.pack(pady=4)
+        star_btns = []
+
+        def set_stars(n):
+            star_state["n"] = n
+            for i, b in enumerate(star_btns):
+                b.config(text="★" if i < n else "☆",
+                         fg="#f9e2af" if i < n else "#6c7086")
+
+        for i in range(5):
+            b = tk.Button(stars_frame, text="☆", bg="#1e1e2e", fg="#6c7086",
+                          font=("Segoe UI", 18), relief="flat", bd=0,
+                          activebackground="#1e1e2e",
+                          command=lambda n=i + 1: set_stars(n))
+            b.pack(side="left")
+            star_btns.append(b)
+
+        # Câu hỏi vô lý
+        question, options = random.choice(SURVEY_QUESTIONS)
+        tk.Label(win, text=question, bg="#1e1e2e", fg="#cdd6f4",
+                 font=("Segoe UI", 10), wraplength=360).pack(pady=(10, 4))
+
+        answer = tk.StringVar(value="")
+        for opt in options:
+            tk.Radiobutton(win, text=opt, variable=answer, value=opt,
+                           bg="#1e1e2e", fg="#cdd6f4", selectcolor="#313244",
+                           activebackground="#1e1e2e", activeforeground="#cdd6f4",
+                           font=("Segoe UI", 9), anchor="w").pack(fill="x", padx=40)
+
+        result = {"ok": False}
+
+        def submit():
+            if star_state["n"] < 5:
+                beep("error")
+                messagebox.showwarning(
+                    "Khảo sát",
+                    "Vui lòng đánh giá 5 sao để tiếp tục.\n"
+                    "(Đánh giá thấp hơn không được chấp nhận.)",
+                    parent=win,
+                )
+                return
+            if not answer.get():
+                messagebox.showwarning("Khảo sát",
+                                       "Bạn chưa chọn câu trả lời.", parent=win)
+                return
+            result["ok"] = True
+            win.destroy()
+
+        tk.Button(win, text="Gửi đánh giá", bg="#74c7ec", fg="#1e1e2e",
+                  relief="flat", command=submit).pack(pady=12, ipadx=10)
 
         self.wait_window(win)
         return result["ok"]
