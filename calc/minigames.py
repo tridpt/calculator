@@ -20,6 +20,8 @@ class MinigameMixin:
             self._minigame_charge,
             self._minigame_catch_button,
             self._minigame_guess_number,
+            self._minigame_whack_mole,
+            self._minigame_type_spell,
         ])
         return game()
 
@@ -164,6 +166,151 @@ class MinigameMixin:
             tk.Button(row, text=str(n), bg=COLORS["blue"], fg=COLORS["bg"],
                       relief="flat", font=("Segoe UI", 12, "bold"), width=3,
                       command=lambda x=n: guess(x)).pack(side="left", padx=4)
+
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Game 4: đập chuột chũi (đập đủ số con trong thời gian) ---- #
+    def _minigame_whack_mole(self):
+        win = self._toplevel("Xác minh: Đập chuột chũi", "420x360")
+
+        need = 8
+        tk.Label(win, text="🔨 Đập đủ 8 con chuột chũi để tiếp tục",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 11, "bold"), wraplength=380).pack(pady=(12, 2))
+
+        info = tk.Label(win, text=f"Đã đập: 0 / {need}   |   Thời gian: 20s",
+                        bg=COLORS["bg"], fg=COLORS["warn"],
+                        font=("Segoe UI", 10, "bold"))
+        info.pack(pady=2)
+
+        grid = tk.Frame(win, bg=COLORS["panel"])
+        grid.pack(fill="both", expand=True, padx=16, pady=10)
+
+        holes = []
+        for r in range(3):
+            grid.grid_rowconfigure(r, weight=1)
+            for col in range(3):
+                grid.grid_columnconfigure(col, weight=1)
+                b = tk.Button(grid, text="", bg=COLORS["key"], fg=COLORS["bg"],
+                              relief="flat", font=("Segoe UI", 18))
+                b.grid(row=r, column=col, padx=4, pady=4, sticky="nsew")
+                holes.append(b)
+
+        state = {"hits": 0, "time": 20, "active": None, "done": False}
+        result = {"ok": False}
+
+        def clear_holes():
+            for b in holes:
+                b.config(text="", bg=COLORS["key"], command=lambda: None)
+
+        def pop():
+            if state["done"] or not win.winfo_exists():
+                return
+            clear_holes()
+            idx = random.randrange(len(holes))
+            state["active"] = idx
+
+            def whack():
+                if state["active"] != idx or state["done"]:
+                    return
+                state["hits"] += 1
+                state["active"] = None
+                beep("info")
+                holes[idx].config(text="💥", bg=COLORS["danger"])
+                info.config(text=f"Đã đập: {state['hits']} / {need}   |   "
+                                 f"Thời gian: {state['time']}s")
+                if state["hits"] >= need:
+                    state["done"] = True
+                    result["ok"] = True
+                    win.after(300, win.destroy)
+
+            holes[idx].config(text="🐹", bg=COLORS["ok"], command=whack)
+            win.after(random.randint(600, 1000), pop)
+
+        def timer():
+            if state["done"] or not win.winfo_exists():
+                return
+            state["time"] -= 1
+            info.config(text=f"Đã đập: {state['hits']} / {need}   |   "
+                             f"Thời gian: {state['time']}s")
+            if state["time"] <= 0:
+                # Hết giờ mà chưa đủ -> "gia hạn" thêm cho qua được (không kẹt)
+                if state["hits"] < need:
+                    state["time"] = 15
+                    info.config(text="Gia hạn thêm 15s vì bạn đập hơi chậm 🐢")
+                win.after(1000, timer)
+            else:
+                win.after(1000, timer)
+
+        pop()
+        timer()
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Game 5: gõ đúng câu thần chú ---- #
+    def _minigame_type_spell(self):
+        win = self._toplevel("Xác minh: Gõ câu thần chú", "440x300")
+
+        spells = [
+            "toi khong phai robot",
+            "may tinh nay tinh dung",
+            "xin hay cho toi tinh toan",
+            "9 cong 10 bang 21",
+        ]
+        spell = random.choice(spells)
+
+        tk.Label(win, text="⌨️ Gõ lại chính xác câu sau (không sai ký tự nào):",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 11, "bold"), wraplength=400).pack(pady=(12, 6))
+
+        tk.Label(win, text=f"\u201c{spell}\u201d", bg=COLORS["display"],
+                 fg=COLORS["warn"], font=("Consolas", 12, "bold"),
+                 wraplength=400, padx=10, pady=8).pack(fill="x", padx=20)
+
+        entry = tk.Entry(win, bg=COLORS["display"], fg=COLORS["fg"],
+                         relief="flat", insertbackground=COLORS["fg"],
+                         font=("Consolas", 12))
+        entry.pack(fill="x", padx=20, pady=10, ipady=6)
+
+        status = tk.Label(win, text="", bg=COLORS["bg"], fg=COLORS["danger"],
+                          font=("Segoe UI", 9), wraplength=400)
+        status.pack()
+
+        state = {"tries": 0}
+        result = {"ok": False}
+        helper = {}
+
+        def check():
+            state["tries"] += 1
+            typed = entry.get()
+            if typed == spell:
+                beep("info")
+                result["ok"] = True
+                win.destroy()
+                return
+            beep("error")
+            # Tìm vị trí sai đầu tiên cho cay
+            pos = 0
+            for a, b in zip(typed, spell):
+                if a != b:
+                    break
+                pos += 1
+            status.config(text=f"Sai ở ký tự thứ {pos + 1}. Thử lại nhé.")
+            # Sau 3 lần sai thì hiện nút "điền giùm"
+            if state["tries"] >= 3 and "btn" not in helper:
+                def autofill():
+                    entry.delete(0, tk.END)
+                    entry.insert(0, spell)
+                    status.config(text="Đã điền giùm. Bấm Xác nhận đi.",
+                                  fg=COLORS["muted"])
+                helper["btn"] = tk.Button(win, text="Điền giùm tôi 🙏",
+                                          bg=COLORS["key_op"], fg=COLORS["fg"],
+                                          relief="flat", command=autofill)
+                helper["btn"].pack(pady=2)
+
+        tk.Button(win, text="Xác nhận", bg=COLORS["accent"], fg=COLORS["bg"],
+                  relief="flat", command=check).pack(pady=8, ipadx=10)
 
         self.wait_window(win)
         return result["ok"]
