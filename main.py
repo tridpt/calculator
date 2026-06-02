@@ -128,6 +128,9 @@ class Calculator(tk.Tk):
         self.history = []  # list[str] - "expr = result"
         self.show_history = False
         self.equals_attempts = 0
+        self.give_ups = 0          # số lần nạn nhân bỏ cuộc giữa chừng
+        self.revealed = False      # đã hiện màn "tự thú" chưa
+        self.prank_disabled = False  # sau khi tự thú, cho phép tính thật
         self._session_job = None  # after() id để cancel khi cần
 
         self._build_ui()
@@ -388,6 +391,11 @@ class Calculator(tk.Tk):
             messagebox.showinfo("Calculator", "Chưa có biểu thức để tính.")
             return
 
+        # Sau khi đã "tự thú", máy tính hoạt động bình thường (kết quả đúng)
+        if self.prank_disabled:
+            self._deliver_real_result()
+            return
+
         self.equals_attempts += 1
         beep("warning")
 
@@ -395,23 +403,29 @@ class Calculator(tk.Tk):
         self._step_lucky_wheel()
 
         if not self._step_license_expired():
+            self._register_give_up()
             return
 
         plan = self._step_choose_plan()
         if plan is None:
+            self._register_give_up()
             return
 
         if not self._step_payment_form():
+            self._register_give_up()
             return
 
         # Bảng phụ phí lằng nhằng sau khi "thanh toán"
         if not self._step_extra_fees():
+            self._register_give_up()
             return
 
         if not self._step_otp():
+            self._register_give_up()
             return
 
         if not self._step_captcha():
+            self._register_give_up()
             return
 
         # Khảo sát hài lòng bắt buộc
@@ -426,6 +440,43 @@ class Calculator(tk.Tk):
 
         self._deliver_result()
         self._schedule_session_expiry()
+
+    # ---- Đếm số lần bỏ cuộc và "tự thú" khi nạn nhân nản ---- #
+    def _register_give_up(self):
+        self.give_ups += 1
+        # Sau 3 lần bỏ cuộc thì hiện màn tự thú (chỉ 1 lần)
+        if self.give_ups >= 3 and not self.revealed:
+            self._step_reveal_prank()
+
+    def _step_reveal_prank(self):
+        self.revealed = True
+        win = self._toplevel("🎉🎉🎉", "420x300")
+
+        tk.Label(win, text="ĐÂY LÀ TRÒ ĐÙA! 🎉", bg="#1e1e2e",
+                 fg="#a6e3a1", font=("Segoe UI", 18, "bold")).pack(pady=(24, 8))
+        tk.Label(
+            win,
+            text=("Không có phí nào hết, không ai lấy tiền của bạn cả.\n"
+                  "Mọi thông tin thẻ / OTP bạn nhập đều bị vứt đi ngay.\n\n"
+                  "Đây chỉ là một cái máy tính troll thôi 😄\n"
+                  "Cảm ơn bạn đã kiên nhẫn (hoặc đã tức điên)."),
+            bg="#1e1e2e", fg="#cdd6f4", font=("Segoe UI", 10),
+            justify="center", wraplength=370,
+        ).pack(pady=4)
+
+        def enable_free():
+            self.prank_disabled = True
+            win.destroy()
+            messagebox.showinfo(
+                "Calculator",
+                "Đã bật chế độ máy tính bình thường. Giờ bấm = sẽ ra kết quả đúng!"
+            )
+
+        tk.Button(win, text="Mở chế độ máy tính thật 🧮", bg="#74c7ec",
+                  fg="#1e1e2e", relief="flat", font=("Segoe UI", 10, "bold"),
+                  command=enable_free).pack(pady=14, ipadx=10, ipady=2)
+
+        self.wait_window(win)
 
     # ---- Bước 0: vòng quay may mắn (rigged - không bao giờ trúng) ---- #
     def _step_lucky_wheel(self):
@@ -539,8 +590,31 @@ class Calculator(tk.Tk):
                 command=lambda n=name: (choice.update(plan=n), win.destroy()),
             ).pack(anchor="e", pady=2)
 
-        tk.Button(win, text="Để sau", bg="#45475a", fg="#cdd6f4",
-                  relief="flat", command=win.destroy).pack(pady=8)
+        # Nút "Để sau" chạy trốn: rê chuột vào là né, phải đuổi vài lần mới bấm được
+        runaway_zone = tk.Frame(win, bg="#1e1e2e", height=60)
+        runaway_zone.pack(fill="x", pady=8)
+        runaway_zone.pack_propagate(False)
+
+        dodge = {"count": 0}
+        skip_btn = tk.Button(runaway_zone, text="Để sau", bg="#45475a",
+                             fg="#cdd6f4", relief="flat", command=win.destroy)
+        skip_btn.place(relx=0.5, rely=0.5, anchor="center")
+
+        def flee(_e):
+            # 4 lần đầu thì né, lần 5 đứng yên cho bấm
+            if dodge["count"] >= 5:
+                return
+            dodge["count"] += 1
+            zw = runaway_zone.winfo_width() or 400
+            bw = skip_btn.winfo_width() or 60
+            new_relx = random.uniform(0.1, 0.9)
+            # đảm bảo nút không tràn ra ngoài
+            max_relx = max(0.1, 1 - (bw / zw) - 0.05)
+            new_relx = min(new_relx, max_relx)
+            skip_btn.place(relx=new_relx, rely=random.uniform(0.2, 0.8),
+                           anchor="center")
+
+        skip_btn.bind("<Enter>", flee)
 
         self.wait_window(win)
         return choice["plan"]
@@ -913,6 +987,20 @@ class Calculator(tk.Tk):
             f"{unlocked}{upgrade}"
         )
         return False
+
+    # ---- Chế độ thật: tính đúng, không phá (sau khi tự thú) ---- #
+    def _deliver_real_result(self):
+        try:
+            value = self._safe_eval(self.expression)
+        except Exception:
+            beep("error")
+            messagebox.showerror("Calculator",
+                                 "Biểu thức không hợp lệ. Vui lòng kiểm tra lại.")
+            return
+        result = self._format(value)
+        self._add_history(self.expression, result)
+        self.expression = result
+        self._refresh()
 
     # ---- Bước 8: trả kết quả sai có chủ đích ---- #
     def _deliver_result(self):
