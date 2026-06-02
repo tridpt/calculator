@@ -11,7 +11,6 @@ from tkinter import messagebox
 from .config import COLORS
 from .platform_utils import beep
 
-
 class MinigameMixin:
     """Cổng minigame: chọn ngẫu nhiên 1 game, trả True nếu vượt qua."""
 
@@ -22,6 +21,7 @@ class MinigameMixin:
             self._minigame_guess_number,
             self._minigame_whack_mole,
             self._minigame_type_spell,
+            self._minigame_timing_bar,
         ])
         return game()
 
@@ -250,15 +250,10 @@ class MinigameMixin:
 
     # ---- Game 5: gõ đúng câu thần chú ---- #
     def _minigame_type_spell(self):
+        from .config import SPELL_PHRASES
         win = self._toplevel("Xác minh: Gõ câu thần chú", "440x300")
 
-        spells = [
-            "toi khong phai robot",
-            "may tinh nay tinh dung",
-            "xin hay cho toi tinh toan",
-            "9 cong 10 bang 21",
-        ]
-        spell = random.choice(spells)
+        spell = random.choice(SPELL_PHRASES)
 
         tk.Label(win, text="⌨️ Gõ lại chính xác câu sau (không sai ký tự nào):",
                  bg=COLORS["bg"], fg=COLORS["fg"],
@@ -312,5 +307,77 @@ class MinigameMixin:
         tk.Button(win, text="Xác nhận", bg=COLORS["accent"], fg=COLORS["bg"],
                   relief="flat", command=check).pack(pady=8, ipadx=10)
 
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Game 6: QTE - dừng thanh con trỏ ở vùng xanh ---- #
+    def _minigame_timing_bar(self):
+        win = self._toplevel("Xác minh: Canh thời điểm", "440x280")
+
+        tk.Label(win, text="🎯 Bấm STOP khi vạch chạy vào vùng xanh",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 11, "bold"), wraplength=400).pack(pady=(14, 6))
+
+        info = tk.Label(win, text="Cần trúng 3 lần", bg=COLORS["bg"],
+                        fg=COLORS["warn"], font=("Segoe UI", 10, "bold"))
+        info.pack(pady=2)
+
+        canvas_w, canvas_h = 380, 50
+        canvas = tk.Canvas(win, width=canvas_w, height=canvas_h,
+                           bg=COLORS["display"], highlightthickness=0)
+        canvas.pack(pady=12)
+
+        # Vùng xanh ở giữa
+        zone_w = 90
+        zone_x0 = (canvas_w - zone_w) // 2
+        zone_x1 = zone_x0 + zone_w
+        zone_id = canvas.create_rectangle(zone_x0, 0, zone_x1, canvas_h,
+                                          fill=COLORS["ok"], outline="")
+        cursor = canvas.create_rectangle(0, 0, 6, canvas_h,
+                                         fill=COLORS["danger"], outline="")
+
+        state = {"x": 0.0, "dir": 1, "hits": 0, "speed": 7, "running": True,
+                 "zx0": zone_x0, "zx1": zone_x1}
+        result = {"ok": False}
+
+        def animate():
+            if not state["running"] or not win.winfo_exists():
+                return
+            state["x"] += state["dir"] * state["speed"]
+            if state["x"] >= canvas_w - 6:
+                state["x"] = canvas_w - 6
+                state["dir"] = -1
+            elif state["x"] <= 0:
+                state["x"] = 0
+                state["dir"] = 1
+            canvas.coords(cursor, state["x"], 0, state["x"] + 6, canvas_h)
+            win.after(16, animate)
+
+        def stop():
+            cx = state["x"] + 3
+            if state["zx0"] <= cx <= state["zx1"]:
+                state["hits"] += 1
+                beep("info")
+                if state["hits"] >= 3:
+                    result["ok"] = True
+                    state["running"] = False
+                    win.destroy()
+                    return
+                info.config(text=f"Trúng! {state['hits']} / 3 - vùng xanh hẹp lại 😈")
+                # Vùng xanh hẹp dần cho khó (nhưng vẫn trúng được)
+                new_zone = max(40, zone_w - state["hits"] * 12)
+                nx0 = (canvas_w - new_zone) // 2
+                nx1 = nx0 + new_zone
+                state["zx0"], state["zx1"] = nx0, nx1
+                canvas.coords(zone_id, nx0, 0, nx1, canvas_h)
+            else:
+                beep("error")
+                info.config(text=f"Hụt! Vẫn {state['hits']} / 3. Bình tĩnh lại nào.")
+
+        tk.Button(win, text="STOP", bg=COLORS["accent"], fg=COLORS["bg"],
+                  relief="flat", font=("Segoe UI", 13, "bold"),
+                  command=stop).pack(pady=4, ipadx=24, ipady=4)
+
+        animate()
         self.wait_window(win)
         return result["ok"]

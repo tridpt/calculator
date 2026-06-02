@@ -27,6 +27,13 @@ AD_LINES = [
     "🔥 Cô đơn? Tải ngay app hẹn hò với cái máy tính.",
     "📈 Đầu tư coin XYZ - x1000 lần (hoặc về 0).",
     "🧴 Thuốc mọc tóc cho lập trình viên - 100% có gàu.",
+    "🍜 Mì tôm vị 'máy tính rang bơ' - ăn là tính nhanh hơn.",
+    "🛏️ Nệm thông minh: ngủ quên vẫn trả phí đều đặn.",
+    "🎓 Khoá học 'Bấm dấu = chuyên nghiệp' - học phí chỉ 49 triệu.",
+    "🐱 Nuôi mèo ảo trong máy tính - mỗi phép tính cho mèo ăn 1 lần.",
+    "🚀 Du lịch sao Hoả - đặt cọc bằng kết quả phép tính của bạn.",
+    "💍 Cưới luôn cái máy tính đi, nó chung thuỷ hơn người yêu cũ.",
+    "🧦 Mua 1 tặng 0 - ưu đãi có hạn (đã hết hạn từ năm ngoái).",
 ]
 
 CAPTCHA_QUESTIONS = [
@@ -34,6 +41,11 @@ CAPTCHA_QUESTIONS = [
     ("2 + 2 = ?  (chứng minh bạn không phải robot)", ["3", "5", "Cá vàng"]),
     ("Chọn đáp án sai:", ["Trời xanh", "Nước ướt", "App này hữu ích"]),
     ("Hôm nay là thứ mấy?", ["Thứ 8", "Thứ Hư Vô", "Không biết, hỏi sếp"]),
+    ("Con gì sủa gâu gâu?", ["Con mèo", "Con bò", "Cái máy tính"]),
+    ("Chọn hình có chứa 'lòng tin của bạn':", ["Ô trống", "Ô cũng trống", "Ô trống nốt"]),
+    ("Bạn đã đọc điều khoản chưa?", ["Rồi (nói dối)", "Chưa (thành thật)", "Điều khoản nào?"]),
+    ("1 + 1 bằng mấy trong hệ nhị phân của trái tim?", ["10", "Tình yêu", "Đừng hỏi khó"]),
+    ("Chọn thứ đắt nhất:", ["Vàng", "Kim cương", "App này"]),
 ]
 
 LOADING_MESSAGES = [
@@ -43,6 +55,12 @@ LOADING_MESSAGES = [
     "AI đang suy nghĩ rất lung tung...",
     "Đang tính toán bằng bàn tính tre...",
     "Đang chờ ông bảo vệ bật lại router...",
+    "Đang đánh thức nhân viên trực tổng đài...",
+    "Đang quy đổi kết quả sang đơn vị 'đại khái'...",
+    "Đang hối lộ con số để nó chịu hiện ra...",
+    "Đang tải thêm RAM từ trên mạng về...",
+    "Đang dịch kết quả từ tiếng máy sang tiếng người...",
+    "Đang chờ phép tính nguội bớt...",
 ]
 
 DISCOUNT_CODES = {
@@ -64,6 +82,22 @@ WHEEL_SEGMENTS = [
     "Sắp trúng tới nơi",
     "🎁 MIỄN PHÍ TRỌN ĐỜI",   # ô xịn - nhưng sẽ không bao giờ trúng
     "Quay lại từ đầu",
+    "Trúng... cái nịt",
+    "Ô này cố tình để trống",
+    "Mất thêm 1 lượt",
+    "Suýt nữa thì trúng (không)",
+]
+
+# Câu thần chú cho minigame gõ chữ
+SPELL_PHRASES = [
+    "toi khong phai robot",
+    "may tinh nay tinh dung",
+    "xin hay cho toi tinh toan",
+    "9 cong 10 bang 21",
+    "toi tu nguyen tra phi dich vu",
+    "con so la ban cua toi",
+    "lam on hien ket qua ra di",
+    "toi se khong so sanh voi casio",
 ]
 
 EXTRA_FEES = [
@@ -83,6 +117,12 @@ SURVEY_QUESTIONS = [
      ["Chắc chắn rồi", "Đã giới thiệu sẵn", "Để dành troll sau"]),
     ("Mức giá có hợp lý không?",
      ["Quá rẻ", "Rẻ như cho", "Tôi muốn trả thêm"]),
+    ("Bạn đánh giá thế nào về tốc độ tính toán?",
+     ["Nhanh như rùa", "Chậm mà chắc (sai)", "Thời gian là khái niệm"]),
+    ("Nếu app này là người, bạn sẽ?",
+     ["Mời đi cà phê", "Chặn số ngay", "Cưới luôn"]),
+    ("Cảm xúc của bạn lúc này?",
+     ["Vui (gượng)", "Tức (thật)", "Đã chấp nhận số phận"]),
 ]
 
 # Điều khoản dịch vụ vô lý - phải cuộn hết mới cho đồng ý
@@ -131,6 +171,10 @@ CARD_REJECTIONS = [
     "Số thẻ phải có đúng 19 chữ số (ô chỉ cho nhập 16).",
     "Chữ số đầu tiên không được là số nguyên tố.",
     "Hệ thống không thích con số này lắm.",
+    "Số thẻ phải đối xứng như gương. Của bạn thì không.",
+    "Thẻ này phát hành ở vũ trụ khác, không hỗ trợ.",
+    "Số thẻ vừa nhập trùng với số nhà của sếp. Cấm.",
+    "Vui lòng nhập số thẻ bằng số La Mã.",
 ]
 
 # Lý do từ chối khi nạn nhân cố thoát app
@@ -140,6 +184,9 @@ EXIT_EXCUSES = [
     "Hệ thống đang lưu... thói quen rời bỏ của bạn.",
     "Thật sự thoát? Cái máy tính sẽ buồn lắm đấy.",
     "Vui lòng xác nhận lần cuối: bạn nỡ bỏ đi sao?",
+    "Đợi đã, vừa có ưu đãi mới dành riêng cho người sắp thoát!",
+    "Thoát bây giờ thì phí dịch vụ vẫn tính nhé, biết chưa.",
+    "Máy tính: 'Đừng đi mà... tui tính sai sửa lại được mà...'",
 ]
 
 # Mật khẩu nào cũng bị chê - đăng nhập bất khả thi
@@ -149,6 +196,10 @@ PASSWORD_COMPLAINTS = [
     "Mật khẩu phải chứa cảm xúc tích cực.",
     "Mật khẩu quá mạnh, làm máy chủ tự ti. Vui lòng yếu hơn.",
     "Tài khoản này có thể tồn tại hoặc không. Vui lòng thử lại.",
+    "Mật khẩu phải chứa tên người yêu cũ (để bảo mật cảm xúc).",
+    "Mật khẩu không được chứa nguyên âm, phụ âm, hoặc số.",
+    "Mật khẩu phải dài hơn bài văn nghị luận lớp 9.",
+    "Mật khẩu vừa nhập đã được người khác mơ thấy. Trùng rồi.",
 ]
 
 # Các dòng hiển thị khi "cập nhật bắt buộc" lúc mở app

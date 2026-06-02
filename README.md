@@ -3,12 +3,12 @@
 Ứng dụng máy tính desktop đơn giản, viết bằng Python + tkinter.
 
 > 🤫 Lưu ý nội bộ (đừng cho nạn nhân biết): đây là một app **troll**.
-> Nhìn ngoài là máy tính bình thường (có icon, lịch sử, memory, hỗ trợ
+> Nhìn ngoài là máy tính bình thường (icon riêng, lịch sử, bộ nhớ, hỗ trợ
 > bàn phím). Nhưng khi bấm `=`, app dẫn dụ nạn nhân qua một chuỗi popup
-> "trả phí mới được tính", rồi cuối cùng trả ra **kết quả sai có chủ đích**.
+> "trả phí mới được tính" + minigame, rồi trả ra **kết quả sai có chủ đích**.
 >
 > Không lấy tiền thật, không gửi dữ liệu đi đâu. Mọi input ở form thẻ /
-> OTP đều bị vứt đi. Chỉ để cười với bạn bè.
+> OTP / mật khẩu đều bị vứt đi ngay. Chỉ để cười với bạn bè.
 
 ## Tính năng máy tính (thật)
 
@@ -16,20 +16,43 @@
 - Hỗ trợ bàn phím: số, `+ - * / ( )`, Enter (=), Esc (C), Backspace
 - Bộ nhớ: `MC MR M+ M- MS`
 - Lịch sử phép tính: bấm `≡` để mở/đóng, double-click 1 dòng để dùng lại
+- Tự nhận DPI để hiển thị nét trên màn hình scaling 125%/150%
 
 ## Chuỗi troll khi bấm `=`
 
-1. 🎰 **Vòng quay may mắn** – "quay trúng 1 phép tính miễn phí", nhưng kim luôn dừng ở ô trượt
+1. 🎰 **Vòng quay may mắn** – kim luôn dừng ở ô trượt
 2. **Giấy phép hết hạn** – báo cần kích hoạt để dùng dấu `=`
-3. **Chọn gói** – kèm đồng hồ đếm ngược "ưu đãi 90%", hết giờ thì "giá x10"
-4. **Form thẻ + mã giảm giá** – nhập gì cũng được, lần đầu "ngân hàng từ chối"; mã giảm giá toàn vô dụng
-5. 💰 **Bảng phụ phí** – "Phí xử lý", "VAT của VAT", "Phí hiển thị bảng phí này"...
-6. **OTP** – cooldown 30s, bắt buộc sai 1 lần đầu
-7. **Captcha** – câu hỏi vô lý
-8. 📋 **Khảo sát** – bắt đánh giá đúng 5 sao mới cho qua
-9. **Quảng cáo + thanh "đang xử lý"** với mấy dòng nhảm
-10. **Kết quả** – sai có chủ đích (lệch ±1, đổi dấu, hoặc làm tròn lệch)
-11. ⏰ Sau ~90s, **phiên tự hết hạn** → lần `=` sau phải làm lại từ đầu
+3. 🔐 **Đăng nhập** – mọi mật khẩu đều bị chê; phải bấm "Tiếp tục với tư cách khách"
+4. **Chọn gói** – đồng hồ đếm ngược "ưu đãi 90%"; nút "Để sau" chạy trốn con trỏ
+5. 📜 **Điều khoản dịch vụ** – phải cuộn xuống tận cuối mới đồng ý được
+6. 💳 **Form thẻ** – nút "Kiểm tra số thẻ" chê đủ kiểu; lần đầu "ngân hàng từ chối"; mã giảm giá vô dụng
+7. 💰 **Bảng phụ phí** – "VAT của VAT", "Phí hiển thị bảng phí này"...
+8. **OTP** – cooldown 30s, bắt buộc sai 1 lần đầu
+9. 🎮 **Minigame** (random 1 trong 6, xem bên dưới)
+10. **Captcha** – câu hỏi vô lý
+11. 📺 **Quảng cáo video** – nút Bỏ qua đếm ngược cứ reset 2 lần
+12. ⭐ **Khảo sát** – bắt đánh giá đúng 5 sao
+13. 📲 **Chia sẻ mạng xã hội** – bấm gì cũng "chia sẻ thất bại"
+14. **Quảng cáo popup + thanh "đang xử lý"**
+15. **Kiểm tra quyền gói** (xem bên dưới)
+16. **Kết quả** – sai tinh vi (lệch nhỏ, không đổi dấu, đôi khi đúng)
+17. ⏰ Sau ~90s, **phiên tự hết hạn** → lần `=` sau phải làm lại từ đầu
+
+Mỗi lần bấm `=` còn cộng thêm "dư nợ phí dịch vụ" hiển thị ở đáy app.
+Lúc mở app cũng có màn **"cập nhật bắt buộc"** chạy tới 99% rồi báo lỗi mạng.
+
+## Minigame thử thách 🎮
+
+Mỗi lần bấm `=` chọn ngẫu nhiên 1 game. Tất cả đều **thắng được**:
+
+| Game | Cách thắng |
+|---|---|
+| 🔋 Sạc năng lượng | Bấm nút thật nhanh để pin đầy 100% (pin tự rò rỉ) |
+| 🎯 Bắt cái nút | Click trúng nút chạy trốn 5 lần |
+| 🔢 Đoán số bí mật | Đoán số 1–5 (gợi ý đôi khi dối); sai 3 lần được tha |
+| 🔨 Đập chuột chũi | Đập đủ 8 con; hết giờ được gia hạn |
+| ⌨️ Gõ câu thần chú | Gõ lại đúng câu; sai 3 lần có nút "điền giùm" |
+| 🎯 Canh thời điểm | Bấm STOP khi vạch vào vùng xanh, trúng 3 lần |
 
 ## Mô tả gói có tác dụng thật 😈
 
@@ -43,16 +66,53 @@ mới bị chặn nếu dùng phép ngoài gói:
 | Nâng Cao | `+ - * /` | đủ phép (nhưng kết quả vẫn sai) |
 | Doanh Nghiệp | — | "kinh doanh liên hệ sau 3-5 ngày", không bao giờ tính được |
 
+## Lối thoát an toàn
+
+- Bỏ cuộc (hủy/đóng popup) **3 lần** → màn "🎉 ĐÂY LÀ TRÒ ĐÙA" → bấm
+  "Mở chế độ máy tính thật" → từ đó `=` ra kết quả đúng, hết troll.
+
+## Cấu trúc dự án
+
+```
+Calculator/
+├── main.py              # Điểm khởi chạy (mỏng)
+├── make_icon.py         # Script tạo icon
+├── icon.ico / icon.png
+├── pytest.ini
+├── README.md
+├── calc/                # Package chính
+│   ├── __init__.py
+│   ├── config.py        # toàn bộ text/dữ liệu troll
+│   ├── platform_utils.py# DPI awareness + âm thanh beep
+│   ├── core.py          # lõi máy tính (UI, bàn phím, bộ nhớ, lịch sử)
+│   ├── troll.py         # chuỗi popup troll khi bấm '='
+│   ├── minigames.py     # 6 minigame thử thách
+│   └── app.py           # lớp Calculator ghép các mixin
+└── tests/               # pytest
+    ├── conftest.py
+    ├── test_core.py
+    ├── test_troll.py
+    └── test_config.py
+```
+
 ## Yêu cầu
 
 - Python 3.8+ (đã thử trên 3.13)
 - `tkinter` (đi kèm Python chuẩn trên Windows)
-- `Pillow` (chỉ cần khi muốn tạo lại icon bằng `make_icon.py`)
+- `Pillow` (chỉ cần khi tạo lại icon bằng `make_icon.py`)
+- `pytest` (chỉ cần khi chạy test)
 
 ## Chạy
 
 ```cmd
 python main.py
+```
+
+## Chạy test
+
+```cmd
+pip install pytest
+python -m pytest
 ```
 
 ## Tạo lại icon (tuỳ chọn)
