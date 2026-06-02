@@ -175,6 +175,15 @@ PASSWORD_COMPLAINTS = [
     "Tài khoản này có thể tồn tại hoặc không. Vui lòng thử lại.",
 ]
 
+# Các dòng hiển thị khi "cập nhật bắt buộc" lúc mở app
+UPDATE_STEPS = [
+    "Đang kiểm tra phiên bản...",
+    "Đang tải bản cập nhật quan trọng (0%)...",
+    "Đang tải bản cập nhật quan trọng (47%)...",
+    "Đang tải bản cập nhật quan trọng (88%)...",
+    "Đang cài đặt (99%)...",
+]
+
 
 # --------------------------------- App ----------------------------------- #
 
@@ -199,10 +208,13 @@ class Calculator(tk.Tk):
         self.prank_disabled = False  # sau khi tự thú, cho phép tính thật
         self._session_job = None  # after() id để cancel khi cần
         self._exit_attempts = 0   # số lần cố thoát app
+        self.debt = 0             # "nợ phí" tích luỹ (đồng)
 
         self._build_ui()
         self._bind_keys()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+        # Cập nhật bắt buộc giả lúc mở app
+        self.after(400, self._step_force_update)
 
     # ============================== UI ============================== #
 
@@ -307,6 +319,23 @@ class Calculator(tk.Tk):
             activebackground="#313244",
             command=self._clear_history,
         ).pack(fill="x", padx=8, pady=(0, 8))
+
+        # --- Thanh trạng thái "nợ phí" ở đáy --- #
+        self.debt_label = tk.Label(
+            self, text="Dư nợ phí dịch vụ: 0đ", bg="#181825", fg="#6c7086",
+            font=("Segoe UI", 8), anchor="e",
+        )
+        self.debt_label.pack(side="bottom", fill="x")
+
+    def _update_debt(self, amount):
+        """Tăng 'nợ phí' và cập nhật thanh trạng thái."""
+        self.debt += amount
+        if hasattr(self, "debt_label"):
+            color = "#f38ba8" if self.debt > 0 else "#6c7086"
+            self.debt_label.config(
+                text=f"Dư nợ phí dịch vụ: {self.debt:,}đ".replace(",", "."),
+                fg=color,
+            )
 
     def _make_button(self, parent, label, r, c):
         op_chars = {"+", "-", "*", "/", "(", ")"}
@@ -466,6 +495,8 @@ class Calculator(tk.Tk):
 
         self.equals_attempts += 1
         beep("warning")
+        # Mỗi lần bấm = lại "phát sinh" thêm phí dịch vụ
+        self._update_debt(random.choice([9000, 15000, 29000]))
 
         # Bước 0: vòng quay "may mắn" (luôn trượt)
         self._step_lucky_wheel()
@@ -537,7 +568,8 @@ class Calculator(tk.Tk):
         tk.Label(
             win,
             text=("Không có phí nào hết, không ai lấy tiền của bạn cả.\n"
-                  "Mọi thông tin thẻ / OTP bạn nhập đều bị vứt đi ngay.\n\n"
+                  "Số 'dư nợ' kia là bịa, mọi thông tin thẻ / OTP bạn nhập\n"
+                  "đều bị vứt đi ngay.\n\n"
                   "Đây chỉ là một cái máy tính troll thôi 😄\n"
                   "Cảm ơn bạn đã kiên nhẫn (hoặc đã tức điên)."),
             bg="#1e1e2e", fg="#cdd6f4", font=("Segoe UI", 10),
@@ -546,6 +578,9 @@ class Calculator(tk.Tk):
 
         def enable_free():
             self.prank_disabled = True
+            # Xoá "nợ phí" - vì đây chỉ là trò đùa
+            self.debt = 0
+            self._update_debt(0)
             # Hủy job "phiên hết hạn" nếu còn treo, tránh nổ popup sau khi đã tự thú
             if self._session_job is not None:
                 try:
@@ -563,6 +598,43 @@ class Calculator(tk.Tk):
                   fg="#1e1e2e", relief="flat", font=("Segoe UI", 10, "bold"),
                   command=enable_free).pack(pady=14, ipadx=10, ipady=2)
 
+        self.wait_window(win)
+
+    # ---- Khởi động: cập nhật bắt buộc giả (chạy 99% rồi lỗi) ---- #
+    def _step_force_update(self):
+        win = self._toplevel("Cập nhật phần mềm", "400x170")
+        # Không cho đóng cửa sổ update bằng nút X
+        win.protocol("WM_DELETE_WINDOW", lambda: None)
+
+        tk.Label(win, text="Đang cập nhật ứng dụng", bg="#1e1e2e",
+                 fg="#cdd6f4", font=("Segoe UI", 12, "bold")).pack(pady=(16, 6))
+
+        status = tk.Label(win, text="", bg="#1e1e2e", fg="#a6adc8",
+                          font=("Segoe UI", 9))
+        status.pack()
+
+        bar = ttk.Progressbar(win, mode="determinate", length=320, maximum=100)
+        bar.pack(pady=12)
+
+        steps = list(enumerate(UPDATE_STEPS))
+        values = [5, 30, 60, 90, 99]
+
+        def run(idx=0):
+            if not win.winfo_exists():
+                return
+            if idx < len(steps):
+                status.config(text=steps[idx][1])
+                bar["value"] = values[idx]
+                win.after(random.randint(500, 900), lambda: run(idx + 1))
+            else:
+                # Tới 99% thì "lỗi" rồi cho vào dùng
+                beep("error")
+                status.config(text="Cập nhật thất bại: mất kết nối. Sẽ thử lại sau.",
+                              fg="#f38ba8")
+                win.after(1200, win.destroy)
+
+        run()
+        # Không grab toàn cục để smoke test có thể đóng; vẫn là cửa sổ con
         self.wait_window(win)
 
     # ---- Bước 0: vòng quay may mắn (rigged - không bao giờ trúng) ---- #
