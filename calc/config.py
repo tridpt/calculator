@@ -228,6 +228,50 @@ SHARE_PLATFORMS = [
     ("🐦 X (Twitter)", "Đã hết lượt tweet miễn phí hôm nay."),
 ]
 
+# "Driver" lỗi thời cần cập nhật trước khi được tính (toàn tên vô lý)
+DRIVER_NAMES = [
+    "Bộ điều khiển Dấu Bằng (=) v2.0",
+    "Trình tăng tốc Phép Cộng 3D",
+    "Driver Màn Hình Số Âm",
+    "Chip xử lý dấu phẩy động (loại tre)",
+    "Card đồ hoạ tính nhẩm RTX 9090",
+    "Trình điều khiển Phím Số Mệt Mỏi",
+    "Bộ giải mã Kết Quả Đúng (đã gỡ bỏ)",
+    "Driver Quạt Tản Nhiệt Cho Con Số 7",
+]
+
+DRIVER_SCAN_STEPS = [
+    "Đang quét thiết bị tính toán...",
+    "Đang đối chiếu với máy chủ ở sao Hoả...",
+    "Đang phát hiện driver lỗi thời...",
+    "Đang đánh giá mức độ nguy hiểm (cao)...",
+]
+
+# Lời chê khi "quét khuôn mặt" - lần nào cũng có cớ
+FACE_SCAN_COMPLAINTS = [
+    "Không nhận diện được khuôn mặt. Vui lòng cười tươi hơn 😐.",
+    "Khuôn mặt trông giống người sắp đòi hoàn tiền. Thử lại.",
+    "Ánh sáng yếu. Vui lòng ra giữa Mặt Trời lúc 12 giờ trưa.",
+    "Phát hiện 2 mắt. Hệ thống chỉ hỗ trợ tối đa 1 mắt rưỡi.",
+    "Khuôn mặt khớp 99% với ảnh wanted. Vui lòng xác minh lại.",
+    "Bạn chớp mắt sai nhịp. Vui lòng chớp theo điệu cha-cha-cha.",
+]
+
+# Lưới captcha "chọn xe buýt" - toàn thứ chẳng phải xe buýt
+BUS_CAPTCHA_TILES = [
+    "🚗", "🐢", "🍔", "🌵", "🚲", "🎩", "🐙", "🧦", "📎",
+    "🛸", "🦆", "🌮", "🧱", "🪿", "🥁", "☂️", "🪑", "🧤",
+    "🐌", "🪀", "🧅", "🛼", "🦑", "🪣",
+]
+
+# Lý do captcha xe buýt báo sai (vì làm gì có ô xe buýt nào)
+BUS_CAPTCHA_COMPLAINTS = [
+    "Vẫn còn xe buýt bạn chưa chọn (ô nào cũng có xe buýt vô hình).",
+    "Bạn chọn nhầm rồi, cái đó là xe buýt giả.",
+    "Hệ thống thấy 1 chiếc xe buýt đang trốn ở ô bạn bỏ sót.",
+    "Chưa đủ tinh thần xe buýt trong lựa chọn của bạn.",
+]
+
 # Bảng màu dùng chung
 COLORS = {
     "bg":        "#1e1e2e",

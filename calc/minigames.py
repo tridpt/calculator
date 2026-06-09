@@ -22,6 +22,7 @@ class MinigameMixin:
             self._minigame_whack_mole,
             self._minigame_type_spell,
             self._minigame_timing_bar,
+            self._minigame_simon,
         ])
         return game()
 
@@ -379,5 +380,96 @@ class MinigameMixin:
                   command=stop).pack(pady=4, ipadx=24, ipady=4)
 
         animate()
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Game 7: Simon - nhớ và lặp lại chuỗi đèn sáng ---- #
+    def _minigame_simon(self):
+        win = self._toplevel("Xác minh: Lặp lại giai điệu", "380x400")
+
+        tk.Label(win, text="🎵 Nhớ thứ tự các ô sáng rồi bấm lại cho đúng",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 11, "bold"), wraplength=340).pack(pady=(14, 4))
+
+        status = tk.Label(win, text="Xem kỹ nhé...", bg=COLORS["bg"],
+                          fg=COLORS["warn"], font=("Segoe UI", 10, "bold"))
+        status.pack(pady=2)
+
+        pad_colors = [COLORS["ok"], COLORS["blue"], COLORS["warn"], COLORS["danger"]]
+        grid = tk.Frame(win, bg=COLORS["bg"])
+        grid.pack(pady=16)
+
+        pads = []
+        state = {"seq": [], "input": [], "tries": 0, "locked": True}
+        result = {"ok": False}
+
+        def light(idx, ms=380, after=None):
+            if not win.winfo_exists():
+                return
+            pads[idx].config(bg=pad_colors[idx])
+            beep("info")
+
+            def restore():
+                if win.winfo_exists():
+                    pads[idx].config(bg=COLORS["key"])
+                if after:
+                    after()
+
+            win.after(ms, restore)
+
+        def play(i=0):
+            if not win.winfo_exists():
+                return
+            if i >= len(state["seq"]):
+                state["locked"] = False
+                status.config(text="Tới lượt bạn! Bấm lại đúng thứ tự.",
+                              fg=COLORS["ok"])
+                return
+            light(state["seq"][i], ms=400,
+                  after=lambda: win.after(200, lambda: play(i + 1)))
+
+        def new_round():
+            if not win.winfo_exists():
+                return
+            state["input"] = []
+            state["locked"] = True
+            state["seq"] = [random.randrange(4) for _ in range(3)]
+            status.config(text="Xem kỹ nhé...", fg=COLORS["warn"])
+            win.after(500, play)
+
+        def press(idx):
+            if state["locked"]:
+                return
+            light(idx, ms=200)
+            state["input"].append(idx)
+            n = len(state["input"])
+            if state["input"][n - 1] != state["seq"][n - 1]:
+                state["tries"] += 1
+                beep("error")
+                if state["tries"] >= 3:
+                    status.config(text="Thôi cho bạn qua vậy 🙄", fg=COLORS["ok"])
+                    result["ok"] = True
+                    win.after(800, win.destroy)
+                    return
+                status.config(text=f"Sai rồi! Thử lại ({state['tries']}/3).",
+                              fg=COLORS["danger"])
+                state["locked"] = True
+                win.after(900, new_round)
+                return
+            if n == len(state["seq"]):
+                beep("info")
+                status.config(text="Chuẩn không cần chỉnh! ✅", fg=COLORS["ok"])
+                result["ok"] = True
+                win.after(400, win.destroy)
+
+        for i in range(4):
+            b = tk.Button(grid, bg=COLORS["key"], relief="flat",
+                          width=10, height=4,
+                          activebackground=pad_colors[i],
+                          command=lambda x=i: press(x))
+            b.grid(row=i // 2, column=i % 2, padx=6, pady=6)
+            pads.append(b)
+
+        new_round()
         self.wait_window(win)
         return result["ok"]

@@ -22,21 +22,24 @@
 
 1. 🎰 **Vòng quay may mắn** – kim luôn dừng ở ô trượt
 2. **Giấy phép hết hạn** – báo cần kích hoạt để dùng dấu `=`
-3. 🔐 **Đăng nhập** – mọi mật khẩu đều bị chê; phải bấm "Tiếp tục với tư cách khách"
-4. **Chọn gói** – đồng hồ đếm ngược "ưu đãi 90%"; nút "Để sau" chạy trốn con trỏ
-5. 📜 **Điều khoản dịch vụ** – phải cuộn xuống tận cuối mới đồng ý được
-6. 💳 **Form thẻ** – nút "Kiểm tra số thẻ" chê đủ kiểu; lần đầu "ngân hàng từ chối"; mã giảm giá vô dụng
-7. 💰 **Bảng phụ phí** – "VAT của VAT", "Phí hiển thị bảng phí này"...
-8. **OTP** – cooldown 30s, bắt buộc sai 1 lần đầu
-9. 🎮 **Minigame** (random 1 trong 6, xem bên dưới)
-10. **Captcha** – câu hỏi vô lý
-11. 📺 **Quảng cáo video** – nút Bỏ qua đếm ngược cứ reset 2 lần
-12. ⭐ **Khảo sát** – bắt đánh giá đúng 5 sao
-13. 📲 **Chia sẻ mạng xã hội** – bấm gì cũng "chia sẻ thất bại"
-14. **Quảng cáo popup + thanh "đang xử lý"**
-15. **Kiểm tra quyền gói** (xem bên dưới)
-16. **Kết quả** – sai tinh vi (lệch nhỏ, không đổi dấu, đôi khi đúng)
-17. ⏰ Sau ~90s, **phiên tự hết hạn** → lần `=` sau phải làm lại từ đầu
+3. 🖥️ **Cập nhật driver máy tính** – quét ra "3 driver lỗi thời" vô lý, bắt cài đặt mới cho dùng
+4. 🔐 **Đăng nhập** – mọi mật khẩu đều bị chê; phải bấm "Tiếp tục với tư cách khách"
+5. **Chọn gói** – đồng hồ đếm ngược "ưu đãi 90%"; nút "Để sau" chạy trốn con trỏ
+6. 📜 **Điều khoản dịch vụ** – phải cuộn xuống tận cuối mới đồng ý được
+7. 💳 **Form thẻ** – nút "Kiểm tra số thẻ" chê đủ kiểu; lần đầu "ngân hàng từ chối"; mã giảm giá vô dụng
+8. 💰 **Bảng phụ phí** – "VAT của VAT", "Phí hiển thị bảng phí này"...
+9. **OTP** – cooldown 30s, bắt buộc sai 1 lần đầu
+10. 📷 **Xác minh khuôn mặt** – "camera" giả, lần đầu luôn chê (cười tươi hơn, ánh sáng yếu...)
+11. 🎮 **Minigame** (random 1 trong 7, xem bên dưới)
+12. **Captcha** – câu hỏi vô lý
+13. 🚌 **Captcha chọn ảnh xe buýt** – lưới 3x3 chẳng có xe buýt nào, lần đầu luôn báo sai
+14. 📺 **Quảng cáo video** – nút Bỏ qua đếm ngược cứ reset 2 lần
+15. ⭐ **Khảo sát** – bắt đánh giá đúng 5 sao
+16. 📲 **Chia sẻ mạng xã hội** – bấm gì cũng "chia sẻ thất bại"
+17. **Quảng cáo popup + thanh "đang xử lý"**
+18. **Kiểm tra quyền gói** (xem bên dưới)
+19. **Kết quả** – sai tinh vi (lệch nhỏ, không đổi dấu, đôi khi đúng)
+20. ⏰ Sau ~90s, **phiên tự hết hạn** → lần `=` sau phải làm lại từ đầu
 
 Mỗi lần bấm `=` còn cộng thêm "dư nợ phí dịch vụ" hiển thị ở đáy app.
 Lúc mở app cũng có màn **"cập nhật bắt buộc"** chạy tới 99% rồi báo lỗi mạng.
@@ -53,6 +56,7 @@ Mỗi lần bấm `=` chọn ngẫu nhiên 1 game. Tất cả đều **thắng �
 | 🔨 Đập chuột chũi | Đập đủ 8 con; hết giờ được gia hạn |
 | ⌨️ Gõ câu thần chú | Gõ lại đúng câu; sai 3 lần có nút "điền giùm" |
 | 🎯 Canh thời điểm | Bấm STOP khi vạch vào vùng xanh, trúng 3 lần |
+| 🎵 Lặp lại giai điệu | Nhớ chuỗi ô sáng (Simon) rồi bấm lại đúng; sai 3 lần được tha |
 
 ## Mô tả gói có tác dụng thật 😈
 

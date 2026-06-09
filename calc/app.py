@@ -17,8 +17,8 @@ class Calculator(CoreCalculatorMixin, TrollMixin, MinigameMixin, tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Calculator")
-        self.geometry("520x520")
-        self.minsize(380, 480)
+        self.geometry("660x720")
+        self.minsize(480, 600)
         self.configure(bg=COLORS["bg"])
         self._set_icon()
 

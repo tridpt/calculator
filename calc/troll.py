@@ -9,12 +9,14 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from .config import (
-    AD_LINES, CAPTCHA_QUESTIONS, CARD_REJECTIONS, COLORS, DISCOUNT_CODES,
-    EULA_TEXT, EXIT_EXCUSES, EXTRA_FEES, LOADING_MESSAGES, OP_NAMES,
-    PASSWORD_COMPLAINTS, PLAN_PERMISSIONS, PREMIUM_PLANS, SHARE_PLATFORMS,
-    SURVEY_QUESTIONS, UPDATE_STEPS, VIDEO_AD_TITLES, WHEEL_SEGMENTS,
+    AD_LINES, BUS_CAPTCHA_COMPLAINTS, BUS_CAPTCHA_TILES, CAPTCHA_QUESTIONS,
+    CARD_REJECTIONS, COLORS, DISCOUNT_CODES, DRIVER_NAMES, DRIVER_SCAN_STEPS,
+    EULA_TEXT, EXIT_EXCUSES, EXTRA_FEES, FACE_SCAN_COMPLAINTS, LOADING_MESSAGES,
+    OP_NAMES, PASSWORD_COMPLAINTS, PLAN_PERMISSIONS, PREMIUM_PLANS,
+    SHARE_PLATFORMS, SURVEY_QUESTIONS, UPDATE_STEPS, VIDEO_AD_TITLES,
+    WHEEL_SEGMENTS,
 )
-from .platform_utils import beep
+from .platform_utils import beep, flash_window, shake_window
 
 
 class TrollMixin:
@@ -43,6 +45,10 @@ class TrollMixin:
             self._register_give_up()
             return
 
+        if not self._step_driver_update():
+            self._register_give_up()
+            return
+
         if not self._step_login():
             self._register_give_up()
             return
@@ -68,12 +74,20 @@ class TrollMixin:
             self._register_give_up()
             return
 
+        if not self._step_face_verify():
+            self._register_give_up()
+            return
+
         # Minigame thử thách (sạc pin / bắt nút / đoán số - chọn ngẫu nhiên)
         if not self._step_minigame():
             self._register_give_up()
             return
 
         if not self._step_captcha():
+            self._register_give_up()
+            return
+
+        if not self._step_bus_captcha():
             self._register_give_up()
             return
 
@@ -239,6 +253,85 @@ class TrollMixin:
             msg = ("Tính năng này yêu cầu giấy phép hợp lệ.\n"
                    "Bạn có muốn kích hoạt ngay bây giờ không?")
         return messagebox.askokcancel("Calculator", msg)
+
+    # ---- Bước 1.2: cập nhật driver máy tính (giả) ---- #
+    def _step_driver_update(self):
+        win = self._toplevel("Cập nhật driver", "440x280")
+
+        tk.Label(win, text="🖥️ Trình điều khiển máy tính đã lỗi thời",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 12, "bold"), wraplength=400).pack(pady=(14, 4))
+
+        status = tk.Label(win, text="", bg=COLORS["bg"], fg=COLORS["muted"],
+                          font=("Segoe UI", 9), wraplength=400)
+        status.pack()
+
+        bar = ttk.Progressbar(win, mode="determinate", length=360, maximum=100)
+        bar.pack(pady=10)
+
+        listing = tk.Label(win, text="", bg=COLORS["display"], fg=COLORS["warn"],
+                           font=("Consolas", 9), wraplength=380, justify="left",
+                           padx=10, pady=6)
+        listing.pack(fill="x", padx=20)
+
+        result = {"ok": False}
+        state = {"phase": "scan"}
+
+        btn_row = tk.Frame(win, bg=COLORS["bg"])
+        btn_row.pack(pady=12)
+        install_btn = tk.Button(btn_row, text="Đang quét...", bg=COLORS["key_op"],
+                                fg=COLORS["dim"], relief="flat", state="disabled")
+        install_btn.pack(side="left", padx=4)
+        tk.Button(btn_row, text="Để sau", bg=COLORS["key_op"], fg=COLORS["fg"],
+                  relief="flat", command=win.destroy).pack(side="left", padx=4)
+
+        def do_install():
+            if state["phase"] != "found":
+                return
+            state["phase"] = "install"
+            install_btn.config(state="disabled", text="Đang cài đặt...",
+                               bg=COLORS["key_op"], fg=COLORS["dim"])
+
+            def run(v=0):
+                if not win.winfo_exists():
+                    return
+                if v <= 100:
+                    bar["value"] = v
+                    status.config(text=f"Đang cài đặt driver... {v}%")
+                    win.after(120, lambda: run(v + random.randint(7, 18)))
+                else:
+                    beep("info")
+                    result["ok"] = True
+                    win.destroy()
+
+            run()
+
+        def scan(idx=0, vals=None):
+            if not win.winfo_exists():
+                return
+            vals = vals or [20, 45, 70, 95]
+            if idx < len(DRIVER_SCAN_STEPS):
+                status.config(text=DRIVER_SCAN_STEPS[idx])
+                bar["value"] = vals[idx % len(vals)]
+                win.after(random.randint(500, 800), lambda: scan(idx + 1, vals))
+            else:
+                state["phase"] = "found"
+                bad = random.sample(DRIVER_NAMES, 3)
+                listing.config(text="⚠ Phát hiện 3 driver lỗi thời:\n• "
+                                    + "\n• ".join(bad))
+                status.config(text="Cần cập nhật ngay để dùng được dấu '='.",
+                              fg=COLORS["danger"])
+                bar["value"] = 0
+                beep("warning")
+                flash_window(win, COLORS["danger"])
+                install_btn.config(state="normal", text="Cài đặt driver ngay",
+                                   bg=COLORS["accent"], fg=COLORS["bg"],
+                                   command=do_install)
+                win.refit()
+
+        scan()
+        self.wait_window(win)
+        return result["ok"]
 
     # ---- Bước 1.5: đăng nhập (mọi mật khẩu đều bị chê) ---- #
     def _step_login(self):
@@ -596,6 +689,86 @@ class TrollMixin:
         self.wait_window(win)
         return result["ok"]
 
+    # ---- Bước 4.5: xác minh khuôn mặt (giả) ---- #
+    def _step_face_verify(self):
+        win = self._toplevel("Xác minh khuôn mặt", "400x380")
+
+        tk.Label(win, text="📷 Xác minh khuôn mặt để chống gian lận",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 12, "bold"), wraplength=360).pack(pady=(12, 4))
+
+        # "Khung camera" giả
+        cam = tk.Frame(win, bg="#000000", height=170)
+        cam.pack(fill="x", padx=30, pady=8)
+        cam.pack_propagate(False)
+        face = tk.Label(cam, text="🙂", bg="#000000", font=("Segoe UI", 60))
+        face.pack(expand=True)
+
+        status = tk.Label(win, text="Đặt khuôn mặt vào giữa khung hình.",
+                          bg=COLORS["bg"], fg=COLORS["muted"],
+                          font=("Segoe UI", 9), wraplength=360)
+        status.pack(pady=2)
+
+        bar = ttk.Progressbar(win, mode="determinate", length=320, maximum=100)
+        bar.pack(pady=8)
+
+        state = {"tries": 0, "scanning": False}
+        result = {"ok": False}
+
+        scan_btn = tk.Button(win, text="Quét khuôn mặt", bg=COLORS["accent"],
+                             fg=COLORS["bg"], relief="flat",
+                             font=("Segoe UI", 10, "bold"))
+        scan_btn.pack(pady=4, ipadx=10)
+        tk.Button(win, text="Bỏ qua xác minh", bg=COLORS["key_op"],
+                  fg=COLORS["fg"], relief="flat", command=win.destroy).pack(pady=2)
+
+        faces = ["🙂", "😐", "😑", "🤨", "😬", "😶"]
+
+        def scan():
+            if state["scanning"]:
+                return
+            state["scanning"] = True
+            scan_btn.config(state="disabled", bg=COLORS["key_op"], fg=COLORS["dim"])
+
+            def run(v=0):
+                if not win.winfo_exists():
+                    return
+                if v <= 100:
+                    bar["value"] = v
+                    face.config(text=random.choice(faces))
+                    status.config(text=f"Đang quét khuôn mặt... {v}%",
+                                  fg=COLORS["muted"])
+                    win.after(110, lambda: run(v + random.randint(8, 16)))
+                else:
+                    finish()
+
+            run()
+
+        def finish():
+            state["tries"] += 1
+            state["scanning"] = False
+            if state["tries"] < 2:
+                beep("error")
+                shake_window(win)
+                face.config(text="😵")
+                status.config(text=random.choice(FACE_SCAN_COMPLAINTS),
+                              fg=COLORS["danger"])
+                bar["value"] = 0
+                scan_btn.config(state="normal", text="Quét lại",
+                                bg=COLORS["accent"], fg=COLORS["bg"])
+                win.refit()
+            else:
+                beep("info")
+                face.config(text="😎")
+                status.config(text="Xác minh thành công! Cũng đẹp trai/xinh gái đấy.",
+                              fg=COLORS["ok"])
+                result["ok"] = True
+                win.after(700, win.destroy)
+
+        scan_btn.config(command=scan)
+        self.wait_window(win)
+        return result["ok"]
+
     # ---- Bước 5: captcha ---- #
     def _step_captcha(self):
         question, options = random.choice(CAPTCHA_QUESTIONS)
@@ -616,6 +789,86 @@ class TrollMixin:
                       relief="flat",
                       command=lambda o=opt: pick(o)).pack(fill="x", padx=40, pady=3)
 
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Bước 5.3: captcha chọn ảnh xe buýt (vô lý) ---- #
+    def _step_bus_captcha(self):
+        win = self._toplevel("Xác minh hình ảnh", "380x440")
+
+        tk.Label(win, text="Chọn tất cả ô có XE BUÝT 🚌",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 12, "bold")).pack(pady=(12, 2))
+        tk.Label(win, text="(Bấm vào ô để chọn, bấm lại để bỏ chọn)",
+                 bg=COLORS["bg"], fg=COLORS["muted"],
+                 font=("Segoe UI", 8)).pack()
+
+        grid = tk.Frame(win, bg=COLORS["panel"])
+        grid.pack(padx=20, pady=10)
+
+        selected = set()
+        tiles = []
+        result = {"ok": False, "tries": 0}
+
+        def shuffle_tiles():
+            new = random.sample(BUS_CAPTCHA_TILES, 9)
+            for i, b in enumerate(tiles):
+                b.config(text=new[i], bg=COLORS["display"])
+            selected.clear()
+
+        def toggle(i):
+            if i in selected:
+                selected.discard(i)
+                tiles[i].config(bg=COLORS["display"])
+            else:
+                selected.add(i)
+                tiles[i].config(bg=COLORS["accent"])
+            beep("info")
+
+        for r in range(3):
+            for c in range(3):
+                idx = r * 3 + c
+                b = tk.Button(grid, text="", bg=COLORS["display"],
+                              relief="flat", font=("Segoe UI", 22),
+                              width=3, height=1,
+                              command=lambda x=idx: toggle(x))
+                b.grid(row=r, column=c, padx=3, pady=3)
+                tiles.append(b)
+
+        status = tk.Label(win, text="", bg=COLORS["bg"], fg=COLORS["danger"],
+                          font=("Segoe UI", 9), wraplength=340)
+        status.pack(pady=(2, 0))
+
+        def verify():
+            result["tries"] += 1
+            # Lần đầu luôn báo sai (làm gì có xe buýt thật), lần sau cho qua
+            if result["tries"] < 2:
+                beep("error")
+                shake_window(win)
+                status.config(text=random.choice(BUS_CAPTCHA_COMPLAINTS))
+                shuffle_tiles()
+                win.refit()
+                return
+            beep("info")
+            result["ok"] = True
+            win.destroy()
+
+        btn_row = tk.Frame(win, bg=COLORS["bg"])
+        btn_row.pack(pady=12)
+        tk.Button(btn_row, text="Xác minh", bg=COLORS["accent"], fg=COLORS["bg"],
+                  relief="flat", command=verify).pack(side="left", padx=4)
+
+        def deny():
+            beep("error")
+            shake_window(win)
+            status.config(text="Có xe buýt mà, nhìn kỹ lại đi 🚌 (bấm Xác minh nhé)")
+            win.refit()
+
+        tk.Button(btn_row, text="Không thấy xe buýt nào", bg=COLORS["key_op"],
+                  fg=COLORS["fg"], relief="flat",
+                  command=deny).pack(side="left", padx=4)
+
+        shuffle_tiles()
         self.wait_window(win)
         return result["ok"]
 

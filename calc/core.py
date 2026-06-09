@@ -46,13 +46,13 @@ class CoreCalculatorMixin:
 
         self.menu_btn = tk.Button(
             topbar, text="≡", bg=c["bg"], fg=c["fg"],
-            font=("Segoe UI", 12), relief="flat", bd=0,
+            font=("Segoe UI", 16), relief="flat", bd=0,
             activebackground=c["key"],
             command=self._toggle_history,
         )
         self.menu_btn.pack(side="left")
         tk.Label(topbar, text="Standard", bg=c["bg"], fg=c["fg"],
-                 font=("Segoe UI", 10)).pack(side="left", padx=8)
+                 font=("Segoe UI", 13)).pack(side="left", padx=8)
 
         main = tk.Frame(self, bg=c["bg"])
         main.pack(fill="both", expand=True, padx=10, pady=8)
@@ -64,13 +64,13 @@ class CoreCalculatorMixin:
 
         # --- Display --- #
         self.display = tk.Entry(
-            self.left, font=("Consolas", 24), justify="right",
+            self.left, font=("Consolas", 34), justify="right",
             bg=c["display"], fg=c["fg"],
             insertbackground=c["fg"], relief="flat", bd=10,
             state="readonly", readonlybackground=c["display"],
             disabledforeground=c["fg"],
         )
-        self.display.pack(fill="x", pady=(2, 8), ipady=12)
+        self.display.pack(fill="x", pady=(2, 8), ipady=16)
 
         # --- Memory row --- #
         mem = tk.Frame(self.left, bg=c["bg"])
@@ -78,7 +78,7 @@ class CoreCalculatorMixin:
         for label in ["MC", "MR", "M+", "M-", "MS"]:
             tk.Button(
                 mem, text=label, bg=c["bg"], fg=c["muted"],
-                relief="flat", font=("Segoe UI", 9),
+                relief="flat", font=("Segoe UI", 11),
                 activebackground=c["key"],
                 command=lambda l=label: self._on_memory(l),
             ).pack(side="left", expand=True, fill="x", padx=1)
@@ -102,12 +102,12 @@ class CoreCalculatorMixin:
 
         # --- History panel --- #
         tk.Label(self.right, text="Lịch sử", bg=c["panel"], fg=c["fg"],
-                 font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=10, pady=(8, 4))
+                 font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=10, pady=(8, 4))
 
         self.history_box = tk.Listbox(
             self.right, bg=c["panel"], fg=c["fg"],
             selectbackground=c["key_op"], selectforeground=c["fg"],
-            font=("Consolas", 10), relief="flat", bd=0, width=22,
+            font=("Consolas", 12), relief="flat", bd=0, width=22,
             activestyle="none",
         )
         self.history_box.pack(fill="both", expand=True, padx=8, pady=4)
@@ -115,7 +115,7 @@ class CoreCalculatorMixin:
 
         tk.Button(
             self.right, text="Xoá lịch sử", bg=c["panel"], fg=c["muted"],
-            relief="flat", font=("Segoe UI", 9),
+            relief="flat", font=("Segoe UI", 11),
             activebackground=c["key"],
             command=self._clear_history,
         ).pack(fill="x", padx=8, pady=(0, 8))
@@ -123,7 +123,7 @@ class CoreCalculatorMixin:
         # --- Thanh trạng thái "nợ phí" ở đáy --- #
         self.debt_label = tk.Label(
             self, text="Dư nợ phí dịch vụ: 0đ", bg=c["panel"], fg=c["dim"],
-            font=("Segoe UI", 8), anchor="e",
+            font=("Segoe UI", 10), anchor="e",
         )
         self.debt_label.pack(side="bottom", fill="x")
 
@@ -138,7 +138,7 @@ class CoreCalculatorMixin:
             bg, fg = c["key"], c["fg"]
 
         btn = tk.Button(
-            parent, text=label, font=("Segoe UI", 12, "bold"),
+            parent, text=label, font=("Segoe UI", 17, "bold"),
             bg=bg, fg=fg, relief="flat",
             activebackground=c["active"],
             command=lambda l=label: self._on_press(l),
@@ -327,6 +327,8 @@ class CoreCalculatorMixin:
             win.minsize(w, h)
 
         win.after(60, _fit)
+        # Cho phép canh lại kích thước khi nội dung thay đổi động sau khi tạo cửa sổ.
+        win.refit = lambda: win.after(10, _fit)
         return win
 
     # ------------------------- Debt counter -------------------------- #
