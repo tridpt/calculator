@@ -13,8 +13,8 @@ from .config import (
     CARD_REJECTIONS, COLORS, DISCOUNT_CODES, DRIVER_NAMES, DRIVER_SCAN_STEPS,
     EULA_TEXT, EXIT_EXCUSES, EXTRA_FEES, FACE_SCAN_COMPLAINTS, LOADING_MESSAGES,
     OP_NAMES, PASSWORD_COMPLAINTS, PLAN_PERMISSIONS, PREMIUM_PLANS,
-    SHARE_PLATFORMS, SURVEY_QUESTIONS, UPDATE_STEPS, VIDEO_AD_TITLES,
-    WHEEL_SEGMENTS,
+    REGISTER_COMPLAINTS, SHARE_PLATFORMS, SURVEY_QUESTIONS, UPDATE_STEPS,
+    VIDEO_AD_TITLES, WHEEL_SEGMENTS,
 )
 from .platform_utils import beep, flash_window, shake_window
 
@@ -371,11 +371,82 @@ class TrollMixin:
 
         tk.Button(win, text="Đăng nhập", bg=COLORS["accent"], fg=COLORS["bg"],
                   relief="flat", command=do_login).pack(pady=(8, 4), ipadx=10)
+        tk.Button(win, text="Đăng ký tài khoản mới", bg=COLORS["blue"],
+                  fg=COLORS["bg"], relief="flat",
+                  command=lambda: self._open_register(win)).pack(pady=(0, 4), ipadx=10)
         tk.Button(win, text="Tiếp tục với tư cách khách", bg=COLORS["key_op"],
                   fg=COLORS["fg"], relief="flat", command=as_guest).pack()
 
         self.wait_window(win)
         return result["ok"]
+
+    # ---- Bước 1.6: đăng ký tài khoản (mở từ màn đăng nhập, luôn thất bại) ---- #
+    def _open_register(self, parent_win):
+        win = self._toplevel("Đăng ký tài khoản", "400x420")
+
+        tk.Label(win, text="Tạo tài khoản mới", bg=COLORS["bg"],
+                 fg=COLORS["fg"], font=("Segoe UI", 12, "bold")).pack(pady=(14, 8))
+
+        fields = {}
+        specs = [
+            ("Tên đăng nhập", False),
+            ("Email", False),
+            ("Mật khẩu", True),
+            ("Xác nhận mật khẩu", True),
+        ]
+        for placeholder, secret in specs:
+            tk.Label(win, text=placeholder, bg=COLORS["bg"], fg=COLORS["muted"],
+                     font=("Segoe UI", 9)).pack(anchor="w", padx=30)
+            entry = tk.Entry(win, bg=COLORS["display"], fg=COLORS["fg"],
+                             relief="flat", insertbackground=COLORS["fg"],
+                             show="•" if secret else "")
+            entry.pack(fill="x", padx=30, pady=(2, 6), ipady=4)
+            fields[placeholder] = entry
+
+        status = tk.Label(win, text="", bg=COLORS["bg"], fg=COLORS["danger"],
+                          font=("Segoe UI", 9), wraplength=340, justify="center")
+        status.pack(pady=2)
+
+        state = {"tries": 0}
+
+        def submit():
+            # Bắt buộc điền hết cho có vẻ nghiêm túc
+            if any(not e.get().strip() for e in fields.values()):
+                messagebox.showinfo("Đăng ký",
+                                    "Vui lòng điền đầy đủ thông tin.", parent=win)
+                return
+            state["tries"] += 1
+            if state["tries"] < 3:
+                beep("error")
+                shake_window(win)
+                status.config(text=random.choice(REGISTER_COMPLAINTS))
+                fields["Mật khẩu"].delete(0, tk.END)
+                fields["Xác nhận mật khẩu"].delete(0, tk.END)
+                win.refit()
+                return
+            # Lần 3: "thành công" nhưng tài khoản phải chờ duyệt -> vô dụng
+            beep("info")
+            messagebox.showinfo(
+                "Đăng ký",
+                "🎉 Đăng ký thành công!\n\n"
+                "Tài khoản của bạn đang chờ phê duyệt thủ công trong vòng "
+                "3-5 ngày làm việc (không tính ngày bạn cần tính toán).\n\n"
+                "Trong thời gian chờ, vui lòng tiếp tục với tư cách khách.",
+                parent=win)
+            win.destroy()
+
+        tk.Button(win, text="Đăng ký", bg=COLORS["accent"], fg=COLORS["bg"],
+                  relief="flat", command=submit).pack(pady=(8, 4), ipadx=12)
+        tk.Button(win, text="Quay lại đăng nhập", bg=COLORS["key_op"],
+                  fg=COLORS["fg"], relief="flat", command=win.destroy).pack()
+
+        self.wait_window(win)
+        # Khôi phục grab cho cửa sổ đăng nhập sau khi đóng form đăng ký
+        try:
+            if parent_win.winfo_exists():
+                parent_win.grab_set()
+        except Exception:
+            pass
 
     # ---- Bước 2: chọn gói + đếm ngược + nút chạy trốn ---- #
     def _step_choose_plan(self):

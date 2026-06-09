@@ -272,6 +272,18 @@ BUS_CAPTCHA_COMPLAINTS = [
     "Chưa đủ tinh thần xe buýt trong lựa chọn của bạn.",
 ]
 
+# Lời chê khi "đăng ký tài khoản" - đăng ký kiểu gì cũng không xong
+REGISTER_COMPLAINTS = [
+    "Tên đăng nhập đã có người khác dùng (và cả vũ trụ song song cũng dùng rồi).",
+    "Email không hợp lệ: phải có đúng 3 dấu '@'.",
+    "Mật khẩu và xác nhận mật khẩu giống nhau quá, nghi ngờ gian lận.",
+    "Tên đăng nhập phải chứa ít nhất 1 ký tự mà bàn phím không gõ được.",
+    "Email này trông giống email thật, vui lòng nhập email giả.",
+    "Bạn phải đủ 18 tuổi tính theo lịch của sao Kim.",
+    "Tên đăng nhập bị trùng với biệt danh hồi cấp 2 của sếp.",
+    "Hệ thống đăng ký đang nghỉ trưa, vui lòng quay lại lúc nửa đêm.",
+]
+
 # Bảng màu dùng chung
 COLORS = {
     "bg":        "#1e1e2e",

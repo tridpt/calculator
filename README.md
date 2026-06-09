@@ -23,7 +23,7 @@
 1. 🎰 **Vòng quay may mắn** – kim luôn dừng ở ô trượt
 2. **Giấy phép hết hạn** – báo cần kích hoạt để dùng dấu `=`
 3. 🖥️ **Cập nhật driver máy tính** – quét ra "3 driver lỗi thời" vô lý, bắt cài đặt mới cho dùng
-4. 🔐 **Đăng nhập** – mọi mật khẩu đều bị chê; phải bấm "Tiếp tục với tư cách khách"
+4. 🔐 **Đăng nhập** – mọi mật khẩu đều bị chê; có nút **Đăng ký** (form chê đủ kiểu, cuối cùng "tài khoản chờ duyệt 3-5 ngày"); phải bấm "Tiếp tục với tư cách khách"
 5. **Chọn gói** – đồng hồ đếm ngược "ưu đãi 90%"; nút "Để sau" chạy trốn con trỏ
 6. 📜 **Điều khoản dịch vụ** – phải cuộn xuống tận cuối mới đồng ý được
 7. 💳 **Form thẻ** – nút "Kiểm tra số thẻ" chê đủ kiểu; lần đầu "ngân hàng từ chối"; mã giảm giá vô dụng
