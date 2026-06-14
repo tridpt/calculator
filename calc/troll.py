@@ -9,14 +9,35 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from .config import (
-    AD_LINES, BUS_CAPTCHA_COMPLAINTS, BUS_CAPTCHA_TILES, CAPTCHA_QUESTIONS,
-    CARD_REJECTIONS, COLORS, COOKIE_TYPES, DISCOUNT_CODES, DRIVER_NAMES,
-    DRIVER_SCAN_STEPS, EULA_TEXT, EXIT_EXCUSES, EXTRA_FEES, FACE_SCAN_COMPLAINTS,
-    LOADING_MESSAGES, OP_NAMES, PASSWORD_COMPLAINTS, PLAN_PERMISSIONS,
-    PREMIUM_PLANS, REGISTER_COMPLAINTS, SHARE_PLATFORMS, SURVEY_QUESTIONS,
-    UPDATE_STEPS, VIDEO_AD_TITLES, WHEEL_SEGMENTS,
+    AD_LINES,
+    ALIEN_VERIFY_COMPLAINTS,
+    ALIEN_VERIFY_QUESTIONS,
+    BUS_CAPTCHA_COMPLAINTS,
+    BUS_CAPTCHA_TILES,
+    CAPTCHA_QUESTIONS,
+    CARD_REJECTIONS,
+    COLORS,
+    COOKIE_TYPES,
+    DISCOUNT_CODES,
+    DRIVER_NAMES,
+    DRIVER_SCAN_STEPS,
+    EULA_TEXT,
+    EXIT_EXCUSES,
+    EXTRA_FEES,
+    FACE_SCAN_COMPLAINTS,
+    LOADING_MESSAGES,
+    OP_NAMES,
+    PASSWORD_COMPLAINTS,
+    PLAN_PERMISSIONS,
+    PREMIUM_PLANS,
+    REGISTER_COMPLAINTS,
+    SHARE_PLATFORMS,
+    SURVEY_QUESTIONS,
+    UPDATE_STEPS,
+    VIDEO_AD_TITLES,
+    WHEEL_SEGMENTS,
 )
-from .platform_utils import beep, flash_window, shake_window, confetti, play_tune
+from .platform_utils import beep, confetti, flash_window, play_tune, shake_window
 
 
 class TrollMixin:
@@ -79,6 +100,10 @@ class TrollMixin:
             return
 
         if not self._step_face_verify():
+            self._register_give_up()
+            return
+
+        if not self._step_alien_verify():
             self._register_give_up()
             return
 
@@ -919,6 +944,60 @@ class TrollMixin:
                 win.after(700, win.destroy)
 
         scan_btn.config(command=scan)
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Bước 4.7: xác minh không phải người ngoài hành tinh (giả) ---- #
+    def _step_alien_verify(self):
+        win = self._toplevel("Xác minh nhân loại 👽", "420x340")
+
+        tk.Label(win, text="👽 Xác minh bạn KHÔNG phải người ngoài hành tinh",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 12, "bold"), wraplength=380).pack(pady=(14, 4))
+
+        question = random.choice(ALIEN_VERIFY_QUESTIONS)
+        tk.Label(win, text=question, bg=COLORS["bg"], fg=COLORS["warn"],
+                 font=("Segoe UI", 10), wraplength=380).pack(pady=(4, 6))
+
+        entry = tk.Entry(win, bg=COLORS["display"], fg=COLORS["fg"],
+                         relief="flat", insertbackground=COLORS["fg"],
+                         justify="center", font=("Segoe UI", 12))
+        entry.pack(fill="x", padx=40, pady=6, ipady=6)
+
+        status = tk.Label(win, text="", bg=COLORS["bg"], fg=COLORS["danger"],
+                          font=("Segoe UI", 9), wraplength=380)
+        status.pack(pady=2)
+
+        state = {"tries": 0}
+        result = {"ok": False}
+
+        def verify():
+            if not entry.get().strip():
+                messagebox.showinfo("Xác minh", "Vui lòng trả lời câu hỏi.",
+                                    parent=win)
+                return
+            state["tries"] += 1
+            # Lần đầu luôn bị nghi ngờ, lần 2 mới "tạm tin"
+            if state["tries"] < 2:
+                beep("error")
+                shake_window(win)
+                status.config(text=random.choice(ALIEN_VERIFY_COMPLAINTS))
+                entry.delete(0, tk.END)
+                win.refit()
+                return
+            beep("info")
+            status.config(text="Tạm tin bạn là người Trái Đất... lần này thôi 🛸",
+                          fg=COLORS["ok"])
+            result["ok"] = True
+            win.after(700, win.destroy)
+
+        tk.Button(win, text="Tôi là người Trái Đất thật mà",
+                  bg=COLORS["accent"], fg=COLORS["bg"], relief="flat",
+                  font=("Segoe UI", 10, "bold"), command=verify).pack(
+                      pady=8, ipadx=10)
+        tk.Button(win, text="Bỏ qua", bg=COLORS["key_op"], fg=COLORS["fg"],
+                  relief="flat", command=win.destroy).pack(pady=2)
+
         self.wait_window(win)
         return result["ok"]
 

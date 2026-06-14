@@ -2,7 +2,6 @@
 
 from calc.app import Calculator
 
-
 # ----- Các hàm tĩnh: không cần GUI ----- #
 
 def test_safe_eval_basic():

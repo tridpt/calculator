@@ -6,10 +6,10 @@ chơi có thể tiến tiếp (vẫn còn lối give-up và phím thoát ẩn n�
 
 import random
 import tkinter as tk
-from tkinter import messagebox
 
 from .config import COLORS, ODD_ONE_OUT_SETS
 from .platform_utils import beep, confetti, play_tune
+
 
 class MinigameMixin:
     """Cổng minigame: chọn ngẫu nhiên 1 game, trả True nếu vượt qua."""
@@ -24,6 +24,7 @@ class MinigameMixin:
             self._minigame_timing_bar,
             self._minigame_simon,
             self._minigame_spot_difference,
+            self._minigame_dodge,
         ])
         return game()
 
@@ -556,5 +557,126 @@ class MinigameMixin:
                               fg=COLORS["danger"])
 
         new_board()
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Game 9: né chướng ngại (sống sót đủ thời gian) ---- #
+    def _minigame_dodge(self):
+        win = self._toplevel("Xác minh: Né chướng ngại", "420x440")
+
+        tk.Label(win, text="🛸 Né các thiên thạch rơi xuống để sống sót",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 11, "bold"), wraplength=380).pack(pady=(12, 2))
+        tk.Label(win, text="Dùng ◀ ▶ (hoặc phím mũi tên) để di chuyển. "
+                           "Sống sót 12 giây.",
+                 bg=COLORS["bg"], fg=COLORS["muted"],
+                 font=("Segoe UI", 8), wraplength=380).pack()
+
+        info = tk.Label(win, text="❤❤❤   |   12s", bg=COLORS["bg"],
+                        fg=COLORS["warn"], font=("Segoe UI", 10, "bold"))
+        info.pack(pady=2)
+
+        cw, ch = 360, 280
+        canvas = tk.Canvas(win, width=cw, height=ch, bg=COLORS["display"],
+                           highlightthickness=0)
+        canvas.pack(pady=8)
+
+        player_w, player_h = 44, 18
+        px = (cw - player_w) / 2
+        player = canvas.create_rectangle(px, ch - player_h - 4,
+                                         px + player_w, ch - 4,
+                                         fill=COLORS["ok"], outline="")
+
+        state = {"px": px, "lives": 3, "time": 12, "rocks": [],
+                 "running": True, "spawn_ms": 700}
+        result = {"ok": False}
+
+        def move(dx):
+            if not state["running"]:
+                return
+            state["px"] = max(0, min(cw - player_w, state["px"] + dx))
+            canvas.coords(player, state["px"], ch - player_h - 4,
+                          state["px"] + player_w, ch - 4)
+
+        # Nút bấm + phím mũi tên
+        btn_row = tk.Frame(win, bg=COLORS["bg"])
+        btn_row.pack(pady=4)
+        tk.Button(btn_row, text="◀", bg=COLORS["key"], fg=COLORS["fg"],
+                  relief="flat", font=("Segoe UI", 14, "bold"), width=4,
+                  command=lambda: move(-34)).pack(side="left", padx=6)
+        tk.Button(btn_row, text="▶", bg=COLORS["key"], fg=COLORS["fg"],
+                  relief="flat", font=("Segoe UI", 14, "bold"), width=4,
+                  command=lambda: move(34)).pack(side="left", padx=6)
+        win.bind("<Left>", lambda _e: move(-34))
+        win.bind("<Right>", lambda _e: move(34))
+
+        def finish(won):
+            if not state["running"]:
+                return
+            state["running"] = False
+            if won:
+                result["ok"] = True
+                self._celebrate(win)
+                win.after(900, win.destroy)
+            else:
+                # Hết mạng vẫn cho qua (mọi game đều thắng được)
+                play_tune("fail")
+                info.config(text="Toang rồi, nhưng thôi cho bạn qua 🙄",
+                            fg=COLORS["ok"])
+                result["ok"] = True
+                win.after(1100, win.destroy)
+
+        def spawn():
+            if not state["running"] or not win.winfo_exists():
+                return
+            rx = random.randint(0, cw - 22)
+            rock = canvas.create_text(rx + 11, 0, text="☄", anchor="n",
+                                      font=("Segoe UI", 16),
+                                      fill=COLORS["danger"])
+            state["rocks"].append([rock, rx])
+            # Sinh nhanh dần một chút nhưng không quá ngặt -> vẫn né được
+            state["spawn_ms"] = max(420, state["spawn_ms"] - 12)
+            win.after(state["spawn_ms"], spawn)
+
+        def tick():
+            if not state["running"] or not win.winfo_exists():
+                return
+            survivors = []
+            for rock, rx in state["rocks"]:
+                canvas.move(rock, 0, 9)
+                x0, y0, x1, y1 = canvas.bbox(rock)
+                py0 = ch - player_h - 4
+                hit = (y1 >= py0 and
+                       rx + 22 > state["px"] and rx < state["px"] + player_w)
+                if hit:
+                    canvas.delete(rock)
+                    state["lives"] -= 1
+                    beep("error")
+                    info.config(text=f"{'❤' * state['lives']}   |   "
+                                     f"{state['time']}s")
+                    if state["lives"] <= 0:
+                        finish(False)
+                        return
+                elif y0 > ch:
+                    canvas.delete(rock)
+                else:
+                    survivors.append([rock, rx])
+            state["rocks"] = survivors
+            win.after(40, tick)
+
+        def timer():
+            if not state["running"] or not win.winfo_exists():
+                return
+            state["time"] -= 1
+            info.config(text=f"{'❤' * state['lives']}   |   {state['time']}s")
+            if state["time"] <= 0:
+                finish(True)
+                return
+            win.after(1000, timer)
+
+        win.after(400, spawn)
+        win.after(400, tick)
+        win.after(1000, timer)
+        canvas.focus_set()
         self.wait_window(win)
         return result["ok"]

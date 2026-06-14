@@ -284,6 +284,24 @@ REGISTER_COMPLAINTS = [
     "Hệ thống đăng ký đang nghỉ trưa, vui lòng quay lại lúc nửa đêm.",
 ]
 
+# Câu hỏi "xác minh không phải người ngoài hành tinh" - đáp án nào cũng bị nghi
+ALIEN_VERIFY_QUESTIONS = [
+    "Bạn có bao nhiêu ngón tay trên MỖI bàn tay?",
+    "Hành tinh quê bạn cách Trái Đất bao nhiêu năm ánh sáng?",
+    "Bạn thở bằng khí gì là chủ yếu?",
+    "Trọng lực ở nơi bạn sinh ra là bao nhiêu m/s²?",
+    "Bạn có mấy trái tim?",
+]
+
+# Lời nghi ngờ khi "xác minh người ngoài hành tinh" - lần nào cũng có cớ
+ALIEN_VERIFY_COMPLAINTS = [
+    "Câu trả lời quá giống người Trái Đất, nghi ngờ là đang giả vờ.",
+    "Hệ thống phát hiện sóng não bất thường ở tần số 42 Hz.",
+    "Bạn chớp mắt đúng 0 lần khi trả lời. Người thật chớp 3-4 lần.",
+    "Nhiệt độ cơ thể của bạn lệch chuẩn 0.01 độ. Đáng ngờ.",
+    "Bạn trả lời nhanh quá, như thể đã chuẩn bị từ tàu mẹ.",
+]
+
 # Các loại "cookie" vô lý trong popup đồng ý cookie (không tắt được cái nào)
 COOKIE_TYPES = [
     ("Cookie cần thiết", "Bắt buộc. Không tắt được. Đừng cố."),

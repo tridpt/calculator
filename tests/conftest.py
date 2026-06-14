@@ -5,8 +5,8 @@ Tkinter không thích tạo/destroy nhiều tk.Tk() trong cùng một process
 cả phiên test (session-scoped) và reset trạng thái trước mỗi test.
 """
 
-import sys
 import os
+import sys
 
 import pytest
 

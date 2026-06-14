@@ -54,6 +54,13 @@ def test_cookie_types_structure():
         assert name and desc
 
 
+def test_alien_verify_data():
+    assert len(config.ALIEN_VERIFY_QUESTIONS) >= 3
+    assert all(q for q in config.ALIEN_VERIFY_QUESTIONS)
+    assert len(config.ALIEN_VERIFY_COMPLAINTS) >= 3
+    assert all(c for c in config.ALIEN_VERIFY_COMPLAINTS)
+
+
 def test_odd_one_out_sets_structure():
     assert len(config.ODD_ONE_OUT_SETS) >= 4
     for common, odd in config.ODD_ONE_OUT_SETS:

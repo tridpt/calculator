@@ -1,7 +1,5 @@
 """Test logic phần troll: sabotage, phát hiện toán tử, phân quyền gói."""
 
-from calc.app import Calculator
-
 
 def test_operators_used_basic(app):
     cases = {

@@ -1,0 +1,14 @@
+# Cấu hình ruff cho dự án Calculator.
+# Giữ nhẹ nhàng: bắt lỗi thật (import thừa, biến mơ hồ...) nhưng không
+# quá khắt khe về độ dài dòng để khỏi phải bẻ các chuỗi tiếng Việt dài.
+
+line-length = 100
+target-version = "py38"
+
+[lint]
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E501",  # độ dài dòng - nhiều chuỗi nội dung troll tiếng Việt khá dài
+]
+
+exclude = ["build", "dist"]

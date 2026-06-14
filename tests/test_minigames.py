@@ -10,8 +10,6 @@ vòng chơi được. Thay vào đó test các "mối nối" có thể kiểm ch
 
 import tkinter as tk
 
-import pytest
-
 from calc import platform_utils
 
 
@@ -29,12 +27,12 @@ def _capture_roster(app, monkeypatch):
     return captured.get("games", []), result
 
 
-def test_minigame_roster_has_eight_unique_games(app, monkeypatch):
+def test_minigame_roster_has_nine_unique_games(app, monkeypatch):
     games, result = _capture_roster(app, monkeypatch)
-    assert len(games) == 8
+    assert len(games) == 9
     # Mỗi game là một callable (bound method) và không trùng nhau
     assert all(callable(g) for g in games)
-    assert len({g.__name__ for g in games}) == 8
+    assert len({g.__name__ for g in games}) == 9
     # Stub trả True -> _step_minigame trả True
     assert result is True
 
@@ -43,6 +41,12 @@ def test_spot_difference_method_exists(app):
     # Game thứ 8 phải tồn tại và gọi được
     assert hasattr(app, "_minigame_spot_difference")
     assert callable(app._minigame_spot_difference)
+
+
+def test_dodge_method_exists(app):
+    # Game thứ 9 phải tồn tại và gọi được
+    assert hasattr(app, "_minigame_dodge")
+    assert callable(app._minigame_dodge)
 
 
 def test_celebrate_no_crash(app):

@@ -80,7 +80,7 @@ class CoreCalculatorMixin:
                 mem, text=label, bg=c["bg"], fg=c["muted"],
                 relief="flat", font=("Segoe UI", 11),
                 activebackground=c["key"],
-                command=lambda l=label: self._on_memory(l),
+                command=lambda lbl=label: self._on_memory(lbl),
             ).pack(side="left", expand=True, fill="x", padx=1)
 
         # --- Bàn phím --- #
@@ -141,7 +141,7 @@ class CoreCalculatorMixin:
             parent, text=label, font=("Segoe UI", 17, "bold"),
             bg=bg, fg=fg, relief="flat",
             activebackground=c["active"],
-            command=lambda l=label: self._on_press(l),
+            command=lambda lbl=label: self._on_press(lbl),
         )
         btn.grid(row=r, column=col, padx=3, pady=3, sticky="nsew")
 
@@ -280,6 +280,7 @@ class CoreCalculatorMixin:
     def _deliver_real_result(self):
         """Tính đúng, không phá (dùng sau khi đã 'tự thú')."""
         from tkinter import messagebox
+
         from .platform_utils import beep
         try:
             value = self._safe_eval(self.expression)
