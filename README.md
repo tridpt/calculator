@@ -90,7 +90,7 @@ Calculator/
 │   ├── platform_utils.py# DPI awareness + âm thanh beep
 │   ├── core.py          # lõi máy tính (UI, bàn phím, bộ nhớ, lịch sử)
 │   ├── troll.py         # chuỗi popup troll khi bấm '='
-│   ├── minigames.py     # 6 minigame thử thách
+│   ├── minigames.py     # 7 minigame thử thách
 │   └── app.py           # lớp Calculator ghép các mixin
 └── tests/               # pytest
     ├── conftest.py
