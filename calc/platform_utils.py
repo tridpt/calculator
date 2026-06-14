@@ -34,8 +34,38 @@ try:
         except Exception:
             pass
 
+    # Vài "giai điệu" ngắn (tần số Hz, thời lượng ms) cho thêm phần sinh động.
+    _TUNES = {
+        "win":   [(660, 90), (880, 90), (1175, 160)],   # thắng minigame - đi lên
+        "fail":  [(440, 120), (330, 120), (220, 200)],  # thất bại - đi xuống
+        "coin":  [(988, 70), (1319, 140)],              # leng keng kiểu game
+        "alert": [(700, 80), (700, 80)],                # tít tít cảnh báo
+    }
+
+    def play_tune(name="win"):
+        """Phát một giai điệu ngắn không chặn luồng (chạy ở thread riêng)."""
+        notes = _TUNES.get(name)
+        if not notes:
+            return
+
+        def _run():
+            for freq, dur in notes:
+                try:
+                    winsound.Beep(int(freq), int(dur))
+                except Exception:
+                    break
+
+        try:
+            import threading
+            threading.Thread(target=_run, daemon=True).start()
+        except Exception:
+            pass
+
 except ImportError:
     def beep(kind="warning"):
+        pass
+
+    def play_tune(name="win"):
         pass
 
 
@@ -92,3 +122,61 @@ def flash_window(win, color="#f38ba8", times=4, delay=70):
             pass
 
     step()
+
+
+def confetti(win, colors=None, count=24, duration=1400):
+    """Bắn pháo giấy ăn mừng trên một Canvas phủ kín cửa sổ.
+
+    Tạo một Canvas trong suốt (nền theo win) rồi cho các chấm màu rơi xuống.
+    Tự dọn Canvas sau `duration` ms. An toàn nếu cửa sổ bị đóng giữa chừng.
+    """
+    import random
+    try:
+        if not win.winfo_exists():
+            return
+        import tkinter as tk
+    except Exception:
+        return
+    colors = colors or ["#f38ba8", "#f9e2af", "#a6e3a1", "#89b4fa", "#cba6f7", "#fab387"]
+    try:
+        win.update_idletasks()
+        w = max(win.winfo_width(), 200)
+        h = max(win.winfo_height(), 200)
+        bg = win.cget("bg")
+    except Exception:
+        return
+
+    canvas = tk.Canvas(win, width=w, height=h, bg=bg, highlightthickness=0)
+    canvas.place(x=0, y=0)
+
+    pieces = []
+    for _ in range(count):
+        x = random.randint(0, w)
+        y = random.randint(-h, 0)
+        size = random.randint(5, 11)
+        color = random.choice(colors)
+        vy = random.uniform(4, 9)
+        vx = random.uniform(-2, 2)
+        item = canvas.create_oval(x, y, x + size, y + size, fill=color, outline="")
+        pieces.append([item, vx, vy])
+
+    state = {"ticks": 0, "max": max(1, duration // 30)}
+
+    def fall():
+        if not win.winfo_exists() or not canvas.winfo_exists():
+            return
+        if state["ticks"] >= state["max"]:
+            try:
+                canvas.destroy()
+            except Exception:
+                pass
+            return
+        for p in pieces:
+            try:
+                canvas.move(p[0], p[1], p[2])
+            except Exception:
+                pass
+        state["ticks"] += 1
+        canvas.after(30, fall)
+
+    fall()

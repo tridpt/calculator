@@ -284,6 +284,33 @@ REGISTER_COMPLAINTS = [
     "Hệ thống đăng ký đang nghỉ trưa, vui lòng quay lại lúc nửa đêm.",
 ]
 
+# Các loại "cookie" vô lý trong popup đồng ý cookie (không tắt được cái nào)
+COOKIE_TYPES = [
+    ("Cookie cần thiết", "Bắt buộc. Không tắt được. Đừng cố."),
+    ("Cookie theo dõi vị trí ngón tay", "Để biết bạn bấm nút nào lâu nhất."),
+    ("Cookie đọc suy nghĩ", "Phân tích xem bạn có đang bực không (có)."),
+    ("Cookie chia sẻ với 3.000 đối tác", "Và 3.000 đối tác của đối tác."),
+    ("Cookie nhớ kết quả sai", "Để lần sau sai cho nhất quán."),
+    ("Cookie bánh quy thật", "Chúng tôi cũng đói. Cho xin cái bánh."),
+]
+
+# Minigame "tìm ô khác biệt": mỗi bộ là (emoji phổ biến, emoji khác biệt).
+# Hai emoji trông hao hao nhau cho khó tìm nhưng vẫn tìm được.
+ODD_ONE_OUT_SETS = [
+    ("🙂", "🙃"),
+    ("😺", "😸"),
+    ("🌕", "🌝"),
+    ("⭐", "🌟"),
+    ("🐶", "🐺"),
+    ("🍊", "🍋"),
+    ("🥦", "🥬"),
+    ("🔵", "🟣"),
+    ("✅", "☑️"),
+    ("🌹", "🥀"),
+    ("🐢", "🐉"),
+    ("💛", "🧡"),
+]
+
 # Bảng màu dùng chung
 COLORS = {
     "bg":        "#1e1e2e",

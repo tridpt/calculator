@@ -46,3 +46,17 @@ def test_discount_codes_structure():
         assert isinstance(code, str)
         assert msg
         assert pct is None or isinstance(pct, (int, float))
+
+
+def test_cookie_types_structure():
+    assert len(config.COOKIE_TYPES) >= 3
+    for name, desc in config.COOKIE_TYPES:
+        assert name and desc
+
+
+def test_odd_one_out_sets_structure():
+    assert len(config.ODD_ONE_OUT_SETS) >= 4
+    for common, odd in config.ODD_ONE_OUT_SETS:
+        # Mỗi bộ phải có 2 emoji KHÁC nhau để minigame có đáp án rõ ràng
+        assert common and odd
+        assert common != odd

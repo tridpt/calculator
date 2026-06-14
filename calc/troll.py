@@ -10,13 +10,13 @@ from tkinter import messagebox, ttk
 
 from .config import (
     AD_LINES, BUS_CAPTCHA_COMPLAINTS, BUS_CAPTCHA_TILES, CAPTCHA_QUESTIONS,
-    CARD_REJECTIONS, COLORS, DISCOUNT_CODES, DRIVER_NAMES, DRIVER_SCAN_STEPS,
-    EULA_TEXT, EXIT_EXCUSES, EXTRA_FEES, FACE_SCAN_COMPLAINTS, LOADING_MESSAGES,
-    OP_NAMES, PASSWORD_COMPLAINTS, PLAN_PERMISSIONS, PREMIUM_PLANS,
-    REGISTER_COMPLAINTS, SHARE_PLATFORMS, SURVEY_QUESTIONS, UPDATE_STEPS,
-    VIDEO_AD_TITLES, WHEEL_SEGMENTS,
+    CARD_REJECTIONS, COLORS, COOKIE_TYPES, DISCOUNT_CODES, DRIVER_NAMES,
+    DRIVER_SCAN_STEPS, EULA_TEXT, EXIT_EXCUSES, EXTRA_FEES, FACE_SCAN_COMPLAINTS,
+    LOADING_MESSAGES, OP_NAMES, PASSWORD_COMPLAINTS, PLAN_PERMISSIONS,
+    PREMIUM_PLANS, REGISTER_COMPLAINTS, SHARE_PLATFORMS, SURVEY_QUESTIONS,
+    UPDATE_STEPS, VIDEO_AD_TITLES, WHEEL_SEGMENTS,
 )
-from .platform_utils import beep, flash_window, shake_window
+from .platform_utils import beep, flash_window, shake_window, confetti, play_tune
 
 
 class TrollMixin:
@@ -40,6 +40,10 @@ class TrollMixin:
         self._update_debt(random.choice([9000, 15000, 29000]))
 
         self._step_lucky_wheel()
+
+        if not self._step_cookie_consent():
+            self._register_give_up()
+            return
 
         if not self._step_license_expired():
             self._register_give_up()
@@ -158,6 +162,9 @@ class TrollMixin:
                   fg=COLORS["bg"], relief="flat", font=("Segoe UI", 10, "bold"),
                   command=enable_free).pack(pady=14, ipadx=10, ipady=2)
 
+        # Ăn mừng: nhạc thắng + pháo giấy cho cái kết vui vẻ
+        win.after(120, lambda: (play_tune("win"), confetti(win, count=36, duration=2200)))
+
         self.wait_window(win)
 
     # ---- Khởi động: cập nhật bắt buộc giả ---- #
@@ -242,6 +249,81 @@ class TrollMixin:
                   relief="flat", command=win.destroy).pack()
 
         self.wait_window(win)
+
+    # ---- Bước 0.5: đồng ý cookie (toggle nào cũng bật lại) ---- #
+    def _step_cookie_consent(self):
+        win = self._toplevel("Chính sách Cookie 🍪", "420x440")
+
+        tk.Label(win, text="🍪 Trang web này dùng cookie",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 13, "bold")).pack(pady=(14, 2))
+        tk.Label(win, text="(Đây là app desktop, nhưng kệ đi.) "
+                           "Bạn có thể 'tuỳ chỉnh' bên dưới.",
+                 bg=COLORS["bg"], fg=COLORS["muted"],
+                 font=("Segoe UI", 9), wraplength=380).pack(pady=(0, 8))
+
+        box = tk.Frame(win, bg=COLORS["panel"])
+        box.pack(fill="both", expand=True, padx=18, pady=4)
+
+        # Mọi công tắc đều bật, và bấm tắt thì nó tự bật lại.
+        toggles = []
+        for name, desc in COOKIE_TYPES:
+            row = tk.Frame(box, bg=COLORS["panel"])
+            row.pack(fill="x", padx=10, pady=4)
+
+            var = tk.BooleanVar(value=True)
+
+            def make_resist(v=var):
+                def resist():
+                    if not v.get():
+                        beep("error")
+                        v.set(True)  # cứng đầu: tự bật lại
+                return resist
+
+            chk = tk.Checkbutton(
+                row, variable=var, command=make_resist(var),
+                bg=COLORS["panel"], fg=COLORS["fg"],
+                selectcolor=COLORS["key"], activebackground=COLORS["panel"],
+                activeforeground=COLORS["fg"], text=name,
+                font=("Segoe UI", 9, "bold"), anchor="w")
+            chk.pack(anchor="w")
+            tk.Label(row, text=desc, bg=COLORS["panel"], fg=COLORS["muted"],
+                     font=("Segoe UI", 8), wraplength=350,
+                     justify="left").pack(anchor="w", padx=24)
+            toggles.append(var)
+
+        result = {"ok": False}
+
+        def accept_all():
+            for v in toggles:
+                v.set(True)
+            beep("info")
+            result["ok"] = True
+            win.destroy()
+
+        def reject_all():
+            # "Từ chối" nhưng thật ra vẫn bật hết rồi mới cho qua
+            beep("error")
+            shake_window(win)
+            for v in toggles:
+                v.set(True)
+            messagebox.showinfo(
+                "Cookie",
+                "Rất tiếc, không thể từ chối cookie cần thiết, "
+                "cookie không cần thiết, và cookie không tồn tại.\n"
+                "Đã bật lại tất cả giúp bạn. Không có gì.", parent=win)
+
+        btn_row = tk.Frame(win, bg=COLORS["bg"])
+        btn_row.pack(pady=12)
+        tk.Button(btn_row, text="Chấp nhận tất cả", bg=COLORS["ok"],
+                  fg=COLORS["bg"], relief="flat", font=("Segoe UI", 10, "bold"),
+                  command=accept_all).pack(side="left", padx=4, ipadx=8)
+        tk.Button(btn_row, text="Từ chối (không được đâu)", bg=COLORS["key_op"],
+                  fg=COLORS["fg"], relief="flat",
+                  command=reject_all).pack(side="left", padx=4)
+
+        self.wait_window(win)
+        return result["ok"]
 
     # ---- Bước 1: license expired ---- #
     def _step_license_expired(self):

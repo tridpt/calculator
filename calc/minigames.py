@@ -8,8 +8,8 @@ import random
 import tkinter as tk
 from tkinter import messagebox
 
-from .config import COLORS
-from .platform_utils import beep
+from .config import COLORS, ODD_ONE_OUT_SETS
+from .platform_utils import beep, confetti, play_tune
 
 class MinigameMixin:
     """Cổng minigame: chọn ngẫu nhiên 1 game, trả True nếu vượt qua."""
@@ -23,8 +23,17 @@ class MinigameMixin:
             self._minigame_type_spell,
             self._minigame_timing_bar,
             self._minigame_simon,
+            self._minigame_spot_difference,
         ])
         return game()
+
+    def _celebrate(self, win):
+        """Hiệu ứng ăn mừng khi vượt qua minigame: nhạc thắng + pháo giấy."""
+        try:
+            play_tune("win")
+            confetti(win)
+        except Exception:
+            pass
 
     # ---- Game 1: sạc năng lượng (bấm nhanh, pin tự rò rỉ) ---- #
     def _minigame_charge(self):
@@ -471,5 +480,81 @@ class MinigameMixin:
             pads.append(b)
 
         new_round()
+        self.wait_window(win)
+        return result["ok"]
+
+    # ---- Game 8: tìm ô khác biệt (spot the difference) ---- #
+    def _minigame_spot_difference(self):
+        win = self._toplevel("Xác minh: Tìm ô khác biệt", "400x460")
+
+        tk.Label(win, text="🔍 Tìm và bấm vào ô KHÁC với những ô còn lại",
+                 bg=COLORS["bg"], fg=COLORS["fg"],
+                 font=("Segoe UI", 11, "bold"), wraplength=360).pack(pady=(12, 2))
+
+        info = tk.Label(win, text="Cần tìm đúng 3 lần", bg=COLORS["bg"],
+                        fg=COLORS["warn"], font=("Segoe UI", 10, "bold"))
+        info.pack(pady=2)
+
+        status = tk.Label(win, text="", bg=COLORS["bg"], fg=COLORS["danger"],
+                          font=("Segoe UI", 9), wraplength=360)
+        status.pack()
+
+        grid = tk.Frame(win, bg=COLORS["panel"])
+        grid.pack(fill="both", expand=True, padx=16, pady=10)
+
+        state = {"hits": 0, "misses": 0, "odd_idx": -1, "tiles": [], "locked": False}
+        result = {"ok": False}
+
+        def new_board():
+            for w in grid.winfo_children():
+                w.destroy()
+            state["tiles"] = []
+            common, odd = random.choice(ODD_ONE_OUT_SETS)
+            # Lưới 4x4, một ô là "odd", còn lại là "common"
+            n = 16
+            state["odd_idx"] = random.randrange(n)
+            for i in range(n):
+                r, c = divmod(i, 4)
+                grid.grid_rowconfigure(r, weight=1)
+                grid.grid_columnconfigure(c, weight=1)
+                emoji = odd if i == state["odd_idx"] else common
+                b = tk.Button(grid, text=emoji, bg=COLORS["display"],
+                              relief="flat", font=("Segoe UI", 20),
+                              command=lambda x=i: pick(x))
+                b.grid(row=r, column=c, padx=3, pady=3, sticky="nsew")
+                state["tiles"].append(b)
+
+        def pick(idx):
+            if state["locked"]:
+                return
+            if idx == state["odd_idx"]:
+                state["hits"] += 1
+                beep("info")
+                play_tune("coin")
+                info.config(text=f"Đúng! {state['hits']} / 3")
+                status.config(text="")
+                if state["hits"] >= 3:
+                    state["locked"] = True
+                    result["ok"] = True
+                    self._celebrate(win)
+                    win.after(900, win.destroy)
+                else:
+                    new_board()
+            else:
+                state["misses"] += 1
+                beep("error")
+                # Sau 5 lần bấm trượt thì "thương tình" cho qua (tránh kẹt)
+                if state["misses"] >= 5:
+                    state["locked"] = True
+                    status.config(text="Thôi mắt bạn mỏi rồi, cho qua vậy 🙄",
+                                  fg=COLORS["ok"])
+                    result["ok"] = True
+                    self._celebrate(win)
+                    win.after(900, win.destroy)
+                    return
+                status.config(text=f"Sai rồi! Ô đó giống hệt mà. ({state['misses']}/5)",
+                              fg=COLORS["danger"])
+
+        new_board()
         self.wait_window(win)
         return result["ok"]
