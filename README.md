@@ -2,6 +2,8 @@
 
 [![Tests](https://github.com/tridpt/calculator/actions/workflows/tests.yml/badge.svg)](https://github.com/tridpt/calculator/actions/workflows/tests.yml)
 [![Build & Release](https://github.com/tridpt/calculator/actions/workflows/release.yml/badge.svg)](https://github.com/tridpt/calculator/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
 
 Ứng dụng máy tính desktop đơn giản, viết bằng Python + tkinter.
 
@@ -126,14 +128,13 @@ python main.py
 ## Chạy test
 
 ```cmd
-pip install pytest
+pip install -r requirements-dev.txt
 python -m pytest
 ```
 
 ## Kiểm tra lint (tuỳ chọn)
 
 ```cmd
-pip install ruff
 ruff check .
 ```
 
@@ -155,3 +156,12 @@ pyinstaller --onefile --windowed --icon icon.ico --add-data "icon.ico;." --name 
 ```
 
 File chạy: `dist\Calculator.exe` – copy đi đâu mở cũng được, không cần Python.
+
+## Đóng góp
+
+Xem [CONTRIBUTING.md](CONTRIBUTING.md) để biết cách chạy test, lint và gửi
+pull request. Lịch sử thay đổi ở [CHANGELOG.md](CHANGELOG.md).
+
+## Giấy phép
+
+Phát hành theo giấy phép [MIT](LICENSE). Dùng vui vẻ, đừng troll người yếu tim 😄

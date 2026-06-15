@@ -1,0 +1,9 @@
+# Công cụ phát triển cho Calculator.
+# Bản thân app chỉ cần Python chuẩn (tkinter đi kèm), không cần cài gì thêm.
+#
+#   pip install -r requirements-dev.txt
+
+pytest>=7.0        # chạy test
+ruff>=0.5          # lint / kiểm tra style
+pyinstaller>=6.0   # đóng gói thành .exe
+pillow>=9.0        # chỉ cần khi tạo lại icon bằng make_icon.py
